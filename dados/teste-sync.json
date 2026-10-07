@@ -1,0 +1,26 @@
+{
+ "versao": 1,
+ "atualizado": "2026-10-07T21:13:33.122Z",
+ "por": "Aparelho A",
+ "arquivo": "Controle_Ferias_N2_2027.xlsx",
+ "edits": [
+  [
+   "CARLOS HENRIQUE FREITAS GOMES",
+   [
+    [
+     "2026-12-01",
+     30
+    ]
+   ]
+  ]
+ ],
+ "locks": [],
+ "ac": {
+  "mode": "funcao",
+  "gestCap": 2,
+  "maxShift": 90,
+  "caps": {}
+ },
+ "aplicado": [],
+ "hier": null
+}
