@@ -976,21 +976,25 @@ document.getElementById('edClearAll').addEventListener('click',()=>{if(!confirm(
 
 // ---------- aba hierarquia ----------
 function renderHier(L){const H=M.hier,inL=new Set(L.map(p=>p.nome)),{rs,re}=M,{caps}=capsFor('equipe');
-  document.getElementById('hsrc').textContent=`Base: ${HIER.arquivo} · ${HIER.rows.length} linha(s)${HIER===HIER_EMB?' · embutida no painel':' · carregada neste navegador'}`;
+  document.getElementById('hsrc').textContent=`Base: ${HIER.arquivo} · ${HIER.rows.length} linha(s)${HIER===HIER_EMB?' · embutida no painel':' · carregada neste navegador'}${hasFilt()?` · filtro ativo: ${L.length} colaborador(es)`:''}`;
   document.getElementById('hreset').hidden=HIER===HIER_EMB;
-  const nGa=H.gos.reduce((s,g)=>s+g.gas.length,0),mapped=M.all.filter(p=>p.hLvl).length;
-  document.getElementById('hkpis').innerHTML=kpi('Gerentes de operações',H.gos.length,H.gos.map(g=>title(g.nome).split(' ')[0]).join(', '))+kpi('Gestores de área',nGa,'equipes na hierarquia')+
-    kpi('Colaboradores mapeados',`${mapped} de ${M.all.length}`,`${Math.round(mapped/Math.max(M.all.length,1)*100)}% da planilha de férias`,mapped===M.all.length?'ok':'warn')+
-    kpi('Sem hierarquia',H.semHier.length,'na planilha de férias, sem GO/GA',H.semHier.length?'warn':'ok')+kpi('Fora da planilha',H.missing.length,'na hierarquia, sem linha de férias',H.missing.length?'warn':'ok');
+  // com filtro ativo, só aparecem GOs/GAs que têm alguém no filtro (ou que entram no filtro eles mesmos)
+  const F=hasFilt(),hit=p=>!!p&&inL.has(p.nome);
+  const gasOf=g=>g.gas.filter(a=>(!st.ga||a.nome===st.ga)&&(!F||hit(a.p)||a.members.some(hit)));
+  const gosV=H.gos.filter(g=>(!st.go||g.nome===st.go)&&(!F||hit(g.p)||gasOf(g).length));
+  const nGa=gosV.reduce((s,g)=>s+gasOf(g).length,0),mapped=L.filter(p=>p.hLvl).length,semL=L.filter(p=>!p.hLvl).length;
+  document.getElementById('hkpis').innerHTML=kpi('Gerentes de operações',gosV.length,gosV.map(g=>title(g.nome).split(' ')[0]).join(', ')||'nenhum no filtro')+kpi('Gestores de área',nGa,F?'no filtro atual (eles ou a equipe)':'equipes na hierarquia')+
+    kpi(F?'Colaboradores no filtro':'Colaboradores mapeados',`${mapped} de ${L.length}`,F?`com GO/GA · ${M.all.length} na planilha`:`${Math.round(mapped/Math.max(L.length,1)*100)}% da planilha de férias`,mapped===L.length?'ok':'warn')+
+    kpi('Sem hierarquia',semL,F?'no filtro atual, sem GO/GA':'na planilha de férias, sem GO/GA',semL?'warn':'ok')+kpi('Fora da planilha',H.missing.length,'na hierarquia, sem linha de férias',H.missing.length?'warn':'ok');
   const per=p=>p&&p.per.length?p.per.map(q=>`${brs(q.ini)}–${brs(q.fim)}`).join(' · '):'—';
   const peak=(P,only)=>{const a=daily(P,rs,re);let m=0,d=null;for(let i=0;i<a.length;i++){const x=rs+i;if(only&&!only.has(x))continue;if(M.isBiz(x,M.natHol)&&a[i]>m){m=a[i];d=x}}return{m,d,a}};
-  const cards=H.gos.filter(g=>!st.go||g.nome===st.go).map(g=>{const gas=g.gas.filter(a=>!st.ga||a.nome===st.ga);
+  const cards=gosV.map(g=>{const gas=gasOf(g);
     const rows=gas.map(a=>{const P=a.members.filter(p=>inL.has(p.nome)),cap=caps['E|'+a.team]??Math.max(1,Math.ceil(a.members.length*.1)),pk=peak(P);
       let over=0;for(let i=0;i<pk.a.length;i++)if(pk.a[i]>cap&&M.isBiz(rs+i,M.natHol))over++;
       let gaw='—';if(a.p&&a.p.per.length){const days=new Set();a.p.per.forEach(q=>{for(let d=q.ini;d<=q.fim;d++)days.add(d)});const w=peak(P,days);gaw=w.m?`${w.m} da equipe fora junto <small style="color:var(--muted)">(pico ${brs(w.d)})</small>`:'equipe toda presente'}
       const oth=a.p?g.gas.filter(b=>b!==a&&b.p).map(b=>[b,bizDaysBoth(a.p,b.p).length]).filter(x=>x[1]):[],goOv=a.p&&g.p?bizDaysBoth(a.p,g.p).length:0,al=P.filter(p=>p.alerta!=='OK').length;
       return`<tr><td>${a.p?edBtn(a.p):''}<b>${esc(title(a.nome))}</b>${a.p?'':' <span class="pill warn">fora da planilha</span>'}</td><td>${per(a.p)}${a.p&&a.p.per.length&&a.p.alerta!=='OK'?` <span class="pill ${SEV(a.p.alerta)}">${esc(a.p.alerta)}</span>`:''}</td><td class="num">${P.length}${P.length!==a.members.length?` <small style="color:var(--muted)">de ${a.members.length}</small>`:''}</td><td class="num">${al?`<span class="pill warn">${al}</span>`:'<span class="pill ok">0</span>'}</td><td class="num">${pk.m}${pk.d?` <small style="color:var(--muted)">${brs(pk.d)}</small>`:''}</td><td class="num">${cap}</td><td class="num">${over?`<span class="pill ${over>10?'bad':'warn'}">${over}</span>`:'<span class="pill ok">0</span>'}</td><td style="white-space:normal;min-width:220px">${gaw}${oth.map(([b,n])=>`<br><span class="pill warn">${n} d</span> junto com o GA ${esc(title(b.nome))}`).join('')}${goOv?`<br><span class="pill warn">${goOv} d</span> junto com o GO`:''}</td></tr>`}).join('');
-    const det=gas.map(a=>{const P=a.members.filter(p=>inL.has(p.nome)).sort((x,y)=>(x.per[0]?.ini??1e9)-(y.per[0]?.ini??1e9));
+    const det=gas.map(a=>{const P=a.members.filter(p=>inL.has(p.nome)).sort((x,y)=>(x.per[0]?.ini??1e9)-(y.per[0]?.ini??1e9));if(F&&!P.length)return'';
       return`<details class="hdet" data-ga="${esc(a.nome)}" ${st.hOpen.has(a.nome)?'open':''}><summary><b>Equipe de ${esc(title(a.nome))}</b> · ${P.length} pessoa(s) · linha do tempo e lista</summary><div class="gantt hg" style="margin-top:10px"></div><div class="tablewrap" style="max-height:none;margin-top:10px"><table><thead><tr><th></th><th>Colaborador</th><th>Função</th><th>Férias</th><th>Retorno</th><th>Alerta</th></tr></thead><tbody>${P.map(p=>`<tr><td>${lockBtn(p)}${edBtn(p)}</td><td>${esc(title(p.nome))}</td><td>${esc(title(p.funcao))}</td><td>${per(p)}</td><td>${p.per.map(q=>brs(q.ret)).join(' · ')||'—'}</td><td><span class="pill ${SEV(p.alerta)}">${esc(p.alerta)}</span></td></tr>`).join('')||'<tr><td colspan="6">Ninguém no filtro atual.</td></tr>'}</tbody></table></div></details>`}).join('');
     const tot=gas.reduce((s,a)=>s+a.members.filter(p=>inL.has(p.nome)).length,0);
     return`<div class="card"><h2>${g.p?edBtn(g.p):''}${esc(title(g.nome))}</h2><p class="sub">Gerente de operações · férias: ${per(g.p)}${g.p?'':' · fora da planilha de férias'} · ${gas.length} gestor(es) de área · ${tot} colaborador(es) no filtro</p>`+
@@ -998,8 +1002,8 @@ function renderHier(L){const H=M.hier,inL=new Set(L.map(p=>p.nome)),{rs,re}=M,{c
       `<div class="grid" style="gap:8px;margin-top:12px">${det}</div></div>`}).join('');
   const sem=H.semHier.filter(p=>inL.has(p.nome));
   const extra=(sem.length&&!st.go&&!st.ga?`<div class="card"><h2>Sem hierarquia</h2><p class="sub">Na planilha de férias, mas sem GO/GA na base de hierarquia</p><div class="list">${sem.map(p=>`<div class="li"><span>${edBtn(p)}${esc(title(p.nome))} <small style="color:var(--muted)">· ${esc(title(p.funcao))}</small></span><span>${per(p)}</span></div>`).join('')}</div></div>`:'')+
-    (H.missing.length&&!st.go&&!st.ga?`<div class="card"><h2>Fora da planilha de férias</h2><p class="sub">Na hierarquia, sem linha na planilha de férias: confira admissões recentes ou desligamentos</p><div class="list">${H.missing.map(n=>`<div class="li"><span>${esc(title(n))}</span><span><small style="color:var(--muted)">${esc(title(H.boss[n]||''))}</small></span></div>`).join('')}</div></div>`:'');
-  document.getElementById('hgos').innerHTML=cards+(extra?`<div class="grid c2">${extra}</div>`:'')}
+    (H.missing.length&&!F?`<div class="card"><h2>Fora da planilha de férias</h2><p class="sub">Na hierarquia, sem linha na planilha de férias: confira admissões recentes ou desligamentos</p><div class="list">${H.missing.map(n=>`<div class="li"><span>${esc(title(n))}</span><span><small style="color:var(--muted)">${esc(title(H.boss[n]||''))}</small></span></div>`).join('')}</div></div>`:'');
+  document.getElementById('hgos').innerHTML=(cards||`<div class="card"><p class="sub" style="margin:0">Nenhum gestor ou colaborador da hierarquia no filtro atual.</p></div>`)+(extra?`<div class="grid c2">${extra}</div>`:'')}
 function drawHierGantt(d){const A=M.hier.gos.flatMap(g=>g.gas).find(a=>a.nome===d.dataset.ga);if(!A)return;const inL=new Set(filt().map(p=>p.nome));gantt(d.querySelector('.hg'),[...(A.p?[A.p]:[]),...A.members.filter(p=>inL.has(p.nome))],'ini')}
 document.getElementById('hgos').addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matches('details.hdet'))return;if(d.open){st.hOpen.add(d.dataset.ga);drawHierGantt(d)}else st.hOpen.delete(d.dataset.ga)},true);
 document.getElementById('hup').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const msg=document.getElementById('hmsg');
