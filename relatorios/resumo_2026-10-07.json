@@ -1,0 +1,115 @@
+{
+  "planilha": "Controle_Ferias_N2_2027.xlsx",
+  "referencia": "07/10/2026",
+  "regras": {
+    "limitar_por": "funcao",
+    "max_gestores_juntos": 2,
+    "deslocamento_preferido_dias": 90,
+    "limites": {},
+    "travados": []
+  },
+  "colaboradores": 156,
+  "choques_antes": 291,
+  "dias_com_choque_antes": 119,
+  "choques_depois": 2,
+  "dias_com_choque_depois": 2,
+  "periodos_reprogramados": 42,
+  "colaboradores_reprogramados": 42,
+  "sem_vaga": [
+    {
+      "nome": "CARLOS HENRIQUE FREITAS GOMES",
+      "inicio_original": "04/01/2027",
+      "dias": 30,
+      "motivo": "nenhuma data válida"
+    }
+  ],
+  "limites": {
+    "OFICIAL DE REDE EXTERNA": {
+      "pessoas": 20,
+      "limite": 2,
+      "pico_antes": 4,
+      "pico_depois": 2
+    },
+    "TECNICO DE SERVICOS AO CLIENTE B2C": {
+      "pessoas": 69,
+      "limite": 7,
+      "pico_antes": 9,
+      "pico_depois": 8
+    },
+    "TECNICO DE REDE EXTERNA": {
+      "pessoas": 33,
+      "limite": 4,
+      "pico_antes": 6,
+      "pico_depois": 4
+    },
+    "AUXILIAR DE REDE EXTERNA": {
+      "pessoas": 7,
+      "limite": 1,
+      "pico_antes": 3,
+      "pico_depois": 1
+    },
+    "TECNICO DE INFRAESTRUTURA DE REDE": {
+      "pessoas": 7,
+      "limite": 1,
+      "pico_antes": 1,
+      "pico_depois": 1
+    },
+    "Oficial de Rede optica": {
+      "pessoas": 1,
+      "limite": 1,
+      "pico_antes": 1,
+      "pico_depois": 1
+    },
+    "GESTOR DE AREA N2": {
+      "pessoas": 5,
+      "limite": 1,
+      "pico_antes": 2,
+      "pico_depois": 1
+    },
+    "GESTOR DE OPERACOES": {
+      "pessoas": 3,
+      "limite": 1,
+      "pico_antes": 1,
+      "pico_depois": 1
+    },
+    "ANALISTA DE PLANEJAMENTO OPERACIONAL JUNIOR": {
+      "pessoas": 1,
+      "limite": 1,
+      "pico_antes": 1,
+      "pico_depois": 1
+    },
+    "TECNICO DE SERVICOS AO CLIENTE B2B": {
+      "pessoas": 2,
+      "limite": 1,
+      "pico_antes": 1,
+      "pico_depois": 1
+    },
+    "GESTOR DE AREA": {
+      "pessoas": 7,
+      "limite": 1,
+      "pico_antes": 2,
+      "pico_depois": 1
+    },
+    "GERENTE GERAL DE OPERACOES": {
+      "pessoas": 1,
+      "limite": 1,
+      "pico_antes": 1,
+      "pico_depois": 1
+    },
+    "GESTÃO (todos juntos)": {
+      "pessoas": null,
+      "limite": 2,
+      "pico_antes": 4,
+      "pico_depois": 2
+    }
+  },
+  "avisos": [
+    "GILSON RODRIGUES MARQUES aparece mais de uma vez na aba Equipe com os mesmos dados (contado uma vez)",
+    "MARCOS RODRIGUES CARVALHO tem períodos diferentes entre as abas; o ajuste usa a aba Equipe e grava o resultado nas duas"
+  ],
+  "csv": "relatorios\\alteracoes_2026-10-07.csv",
+  "planilha_ajustada": "relatorios\\Controle_Ferias_N2_2027_sem_colisao_2026-10-07.xlsx",
+  "celulas_linhas_gravadas": 49,
+  "nao_encontrados_na_planilha": [],
+  "celulas_faltando": []
+}

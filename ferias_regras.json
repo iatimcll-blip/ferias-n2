@@ -1,0 +1,7 @@
+{
+  "limitar_por": "funcao",
+  "max_gestores_juntos": 2,
+  "deslocamento_preferido_dias": 90,
+  "limites": {},
+  "travados": []
+}
