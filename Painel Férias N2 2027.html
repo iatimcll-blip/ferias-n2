@@ -163,6 +163,10 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding-block:10px 24
 .pill.ed{background:var(--surface2);color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
 dialog#edDlg{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--fg);padding:20px;width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto}
 dialog#edDlg::backdrop{background:#0009}
+dialog#acDlg{border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--fg);padding:20px;width:min(1180px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto}
+dialog#acDlg::backdrop{background:#0009}
+dialog#acDlg .tablewrap{background:var(--surface)}
+.pill.new{background:var(--surface2);color:var(--blue)}
 .edgrid{display:grid;gap:10px;margin-top:12px}
 .edrow{display:grid;grid-template-columns:96px 170px 90px 1fr;gap:6px 12px;align-items:end;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
 .edrow.err{border-color:var(--bad)}
@@ -273,7 +277,7 @@ dialog#edDlg::backdrop{background:#0009}
   <div class="card acpanel">
     <div class="row" style="justify-content:space-between;align-items:flex-start">
       <div style="min-width:0;flex:1 1 380px"><h2>Anti-colisão</h2><p class="sub" style="margin:0">Reorganiza as datas para que nenhum grupo passe do limite de pessoas fora ao mesmo tempo. Mantém a duração de cada período, inicia sempre de seg a qua fora de véspera de feriado, respeita os 12 meses de casa e o prazo concessivo, e procura a data mais próxima da original. Colaboradores com cadeado fechado, datas editadas manualmente e períodos já iniciados não mudam.</p></div>
-      <div class="row"><button class="btn primary acRunB" id="acRun">Aplicar anti-colisão</button><button class="btn acUndoB" id="acUndo">Desfazer</button></div>
+      <div class="row"><button class="btn primary acRunB" id="acRun">Gerar proposta anti-colisão</button><button class="btn acUndoB" id="acUndo">Desfazer</button></div>
     </div>
     <div class="grid kpis" id="acKpis" style="margin-top:14px"></div>
     <details id="acCfg" style="margin-top:12px"><summary class="flabel" style="cursor:pointer">Regras de limite</summary>
@@ -310,7 +314,7 @@ dialog#edDlg::backdrop{background:#0009}
   <div class="card acpanel">
     <div class="row" style="justify-content:space-between;align-items:flex-start">
       <div style="min-width:0;flex:1 1 380px"><h2>Anti-colisão da gestão</h2><p class="sub" style="margin:0">Mesma simulação da Linha do tempo: reorganiza as datas de toda a equipe respeitando o limite por função e, aqui, o máximo de gestores fora ao mesmo tempo. Gestores com cadeado fechado não mudam. Desfazer volta às datas da planilha em todas as abas.</p></div>
-      <div class="row"><label class="flabel" for="acGest2">Máx. gestores fora juntos</label><input id="acGest2" type="number" min="0" max="17" style="width:70px"><button class="btn primary acRunB">Aplicar anti-colisão</button><button class="btn acUndoB">Desfazer</button></div>
+      <div class="row"><label class="flabel" for="acGest2">Máx. gestores fora juntos</label><input id="acGest2" type="number" min="0" max="17" style="width:70px"><button class="btn primary acRunB">Gerar proposta anti-colisão</button><button class="btn acUndoB">Desfazer</button></div>
     </div>
     <div class="grid kpis" id="acKpisG" style="margin-top:14px"></div>
     <div id="acGChanges" style="margin-top:12px"></div>
@@ -351,6 +355,16 @@ dialog#edDlg::backdrop{background:#0009}
   <div class="row" style="justify-content:space-between;margin-top:16px">
     <button type="button" class="btn" id="edReset">Voltar às datas da planilha</button>
     <div class="row"><button type="button" class="btn" id="edCancel">Cancelar</button><button type="submit" class="btn primary" id="edSave">Salvar</button></div>
+  </div>
+</form></dialog>
+<dialog id="acDlg" aria-labelledby="acDT"><form id="acForm" method="dialog">
+  <h2 id="acDT">Proposta do anti-colisão</h2><p class="sub" id="acDS" style="margin:0 0 12px"></p>
+  <div class="grid kpis" id="acDK"></div>
+  <div id="acDSem" style="margin-top:12px"></div>
+  <div class="tablewrap" style="max-height:48vh;margin-top:12px"><table id="acDTab"></table></div>
+  <div class="row" style="justify-content:space-between;margin-top:16px">
+    <div class="row"><button type="button" class="btn" id="acDCopy">Copiar proposta</button><span class="flabel" id="acDMsg"></span></div>
+    <div class="row"><button type="button" class="btn" id="acDNo">Descartar</button><button type="submit" class="btn primary" value="ok">Aplicar proposta</button></div>
   </div>
 </form></dialog>
 <footer>Jarvis MCLL · alloha FIBRA</footer>
@@ -783,7 +797,31 @@ function renderSimbar(){const mv=M.all.filter(p=>p.moved);const b=document.getEl
   const ne=mv.filter(isEdited).length,na=mv.length-ne;
   document.getElementById('edClearAll').hidden=!ne;document.getElementById('simUndo').hidden=!na;
   document.getElementById('simtxt').innerHTML=`<b>Datas alteradas no painel:</b> ${[ne?ne+' colaborador(es) editado(s) manualmente':'',na?na+' reprogramado(s) pelo anti-colisão':''].filter(Boolean).join(' · ')}${AC.res?` · choques ${fmt(AC.res.before.exc)} → ${fmt(m.exc)} pessoa-dias`:''}. Todos os módulos e o relatório .xlsx usam as novas datas.`}
-document.querySelectorAll('.acRunB').forEach(b=>b.addEventListener('click',()=>{b.disabled=true;b.textContent='Reorganizando…';setTimeout(()=>{antiColisao();b.disabled=false;b.textContent='Aplicar anti-colisão';render()},20)}));
+// O botão calcula uma proposta e mostra numa janela; o painel só muda ao aplicar.
+const acDlg=document.getElementById('acDlg');const AC_PREV={per:null,res:null};
+document.querySelectorAll('.acRunB').forEach(b=>b.addEventListener('click',()=>{b.disabled=true;b.textContent='Calculando…';setTimeout(()=>{
+  AC_PREV.per=new Map(M.all.map(p=>[p,p.per.map(q=>({ini:q.ini,dias:q.dias}))]));AC_PREV.res=AC.res;
+  antiColisao();b.disabled=false;b.textContent='Gerar proposta anti-colisão';showProposal()},20)}));
+function acProposalRows(){const rows=[];M.all.forEach(p=>{if(isEdited(p))return;const prev=AC_PREV.per.get(p)||[];const ob=[...p.orig].sort((a,b)=>a.ini-b.ini);
+  p.per.forEach((q,j)=>{const o=ob[j];if(o&&o.ini===q.ini&&o.dias===q.dias)return;const pv=prev[j];rows.push({p,q,o,sh:o?q.ini-o.ini:0,novo:!pv||pv.ini!==q.ini||pv.dias!==q.dias})})});
+  return rows.sort((a,b)=>a.q.ini-b.q.ini||a.p.nome.localeCompare(b.p.nome))}
+function showProposal(){const r=AC.res,rows=acProposalRows(),sem=[...new Set(r.sem)];acDlg._rows=rows;
+  const pessoas=new Set(rows.map(x=>x.p.nome)).size,ja=rows.filter(x=>!x.novo).length,ne=M.all.filter(isEdited).length,lk=M.all.filter(isLocked).length;
+  document.getElementById('acDS').textContent=`Limite por ${AC.mode==='funcao'?'função':'grupo'}${AC.gestCap>0?` · até ${AC.gestCap} gestores fora juntos`:''} · deslocamento preferido até ${AC.maxShift} dias${lk?` · ${lk} travado(s)`:''}${ne?` · ${ne} editado(s) à mão não entram`:''}. Nada muda no painel até você aplicar.`;
+  const desl=rows.map(x=>Math.abs(x.sh));
+  document.getElementById('acDK').innerHTML=
+    kpi('Choques',`${fmt(r.before.exc)} → ${fmt(r.after.exc)}`,`pessoa-dias acima do limite · dias com choque ${r.before.days} → ${r.after.days}`,r.after.exc?(r.after.exc<r.before.exc?'warn':'bad'):'ok')+
+    kpi('Períodos reprogramados',rows.length,`${pessoas} colaborador(es)${ja?` · ${ja} já aplicado(s) antes`:''}`)+
+    kpi('Deslocamento médio',desl.length?Math.round(desl.reduce((a,b)=>a+b,0)/desl.length)+' d':'–',desl.length?`maior: ${Math.max(...desl)} dias`:'nenhuma data movida')+
+    kpi('Sem vaga',sem.length,sem.length?'ficaram na data de menor choque':'todos encaixados',sem.length?'bad':'ok');
+  document.getElementById('acDSem').innerHTML=sem.length?`<div class="notice"><b>Sem vaga:</b> ${sem.map(n=>esc(title(n))).join(', ')}. Não há data válida sem choque (prazo concessivo, 12 meses de casa ou limite da equipe). Depois de aplicar, ajuste pelo lápis ou aumente o limite da equipe em Regras de limite.</div>`:'';
+  document.getElementById('acDTab').innerHTML=`<thead><tr><th>Colaborador</th><th>Função</th><th>Período</th><th>Na planilha</th><th>Proposta</th><th class="num">Deslocamento</th><th>Novo fim</th><th>Retorno</th><th>Status</th></tr></thead><tbody>${rows.map(({p,q,o,sh,novo})=>`<tr><td>${esc(title(p.nome))}${p.grupo==='Gestão'?' <span class="pill ok">gestão</span>':''}</td><td>${esc(title(p.funcao))}</td><td>${q.k+1}º · ${q.dias}d</td><td>${o?DOW[dow(o.ini)]+' '+br(o.ini):'—'}</td><td><b>${DOW[dow(q.ini)]} ${br(q.ini)}</b></td><td class="num"><span class="shift ${sh>0?'p':'n'}">${sh>0?'+':''}${sh} d</span></td><td>${br(q.fim)}</td><td>${DOW[dow(q.ret)]} ${br(q.ret)}</td><td>${sem.includes(p.nome)?'<span class="pill bad">sem vaga</span>':p.alerta==='OK'?'<span class="pill ok">OK</span>':`<span class="pill warn">${esc(p.alerta)}</span>`}${novo?'':' <span class="pill new">já aplicada</span>'}</td></tr>`).join('')||'<tr><td colspan="9">Nenhuma mudança necessária: as datas atuais já respeitam os limites (ou não há data válida para mover).</td></tr>'}</tbody>`;
+  document.getElementById('acDMsg').textContent='';acDlg.returnValue='';acDlg.showModal()}
+acDlg.addEventListener('close',()=>{
+  if(acDlg.returnValue==='ok'){render();if(st.tab==='tl'){const c=document.getElementById('acChangesCard');if(!c.hidden)c.scrollIntoView({block:'start'})}return}
+  M.all.forEach(p=>{const s=AC_PREV.per&&AC_PREV.per.get(p);if(s){p.per=s.map(q=>({k:0,ini:q.ini,dias:q.dias}));evalP(p)}});syncGest();_gs=null;AC.res=AC_PREV.res;render()});
+document.getElementById('acDNo').addEventListener('click',()=>acDlg.close('no'));
+document.getElementById('acDCopy').addEventListener('click',()=>{const rows=acDlg._rows||[];copyTxt(['Colaborador\tFunção\tPeríodo\tDias\tInício na planilha\tInício proposto\tDeslocamento (dias)\tNovo fim\tRetorno'].concat(rows.map(({p,q,o,sh})=>[p.nome,p.funcao,q.k+1,q.dias,o?br(o.ini):'',br(q.ini),sh,br(q.fim),br(q.ret)].join('\t'))).join('\n'),document.getElementById('acDMsg'))});
 const doUndo=()=>{acUndo();applyEdits();render()};
 document.querySelectorAll('.acUndoB').forEach(b=>b.addEventListener('click',doUndo));document.getElementById('simUndo').addEventListener('click',doUndo);
 document.getElementById('acGest2').addEventListener('change',e=>{AC.gestCap=Math.max(0,+e.target.value||0);saveAC();render()});
