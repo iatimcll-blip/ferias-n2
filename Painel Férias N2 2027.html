@@ -154,6 +154,11 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding-block:10px 24
 .themebtn{display:inline-flex;align-items:center;gap:6px}
 .themebtn svg{width:16px;height:16px}
 .printonly{display:none}
+.hdet{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface2);min-width:0}
+#hgos>.card,#hgos .grid{min-width:0}
+.hdet .gantt{overflow-x:auto;max-width:100%}
+.hdet summary{cursor:pointer;padding:2px 0}
+.hdet .tablewrap{background:var(--surface)}
 .bot{position:fixed;right:18px;bottom:18px;z-index:30;width:62px;height:62px;border-radius:50%;border:2px solid var(--green);background:#182238;color:#fff;box-shadow:0 6px 20px #0005;cursor:pointer;display:grid;place-items:center;padding:0}
 .bot:hover{transform:translateY(-2px)}
 .bot:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
@@ -244,12 +249,15 @@ dialog#acDlg .tablewrap{background:var(--surface)}
   <button class="tab" role="tab" data-t="cap" aria-selected="false">Capacidade</button>
   <button class="tab" role="tab" data-t="tl" aria-selected="false">Linha do tempo</button>
   <button class="tab" role="tab" data-t="gest" aria-selected="false">Gestão</button>
+  <button class="tab" role="tab" data-t="hier" aria-selected="false">Hierarquia</button>
   <button class="tab" role="tab" data-t="conf" aria-selected="false">Conformidade</button>
   <button class="tab" role="tab" data-t="base" aria-selected="false">Base</button>
 </div></nav>
 <div class="filters"><div class="wrap">
   <span class="flabel">Grupo</span><div class="chips" id="fgrp"></div>
   <span class="flabel">Função</span><select id="ffun"><option value="">Todas</option></select>
+  <span class="flabel">GO</span><select id="fgo" aria-label="Gerente de operações"><option value="">Todos</option></select>
+  <span class="flabel">GA</span><select id="fga" aria-label="Gestor de área"><option value="">Todos</option></select>
   <span class="flabel">Mês</span><select id="fmes"><option value="">Período todo</option></select>
   <input id="fq" type="search" placeholder="Buscar colaborador" aria-label="Buscar colaborador">
   <span id="fcount" class="flabel"></span><button class="btn" id="fclear" hidden>Limpar filtros</button>
@@ -290,7 +298,7 @@ dialog#acDlg .tablewrap{background:var(--surface)}
   <div class="card">
     <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:10px">
       <div style="flex:1 1 380px;min-width:0"><h2>Cobertura semanal por equipe</h2><p class="sub" style="margin:0">Máximo de pessoas fora no mesmo dia útil de cada semana, comparado ao limite simultâneo da equipe (padrão 10% do quadro; ajuste em Linha do tempo › Regras de limite). Vermelho = acima do limite. Clique numa semana para ver quem está fora.</p></div>
-      <div class="row"><label class="flabel" for="capMode">Agrupar por</label><select id="capMode"><option value="grupo">Grupo</option><option value="funcao">Função</option></select></div>
+      <div class="row"><label class="flabel" for="capMode">Agrupar por</label><select id="capMode"><option value="grupo">Grupo</option><option value="funcao">Função</option><option value="equipe">Equipe (hierarquia)</option></select></div>
     </div>
     <div class="cap" id="capHeat"></div>
     <div class="legend" style="margin-top:10px"><span><i style="background:var(--heat0);outline:1px solid var(--line)"></i>Ninguém fora</span><span><i style="background:var(--heat1)"></i>Dentro do limite (mais escuro = mais perto)</span><span><i style="background:var(--bad)"></i>Acima do limite</span></div>
@@ -311,7 +319,7 @@ dialog#acDlg .tablewrap{background:var(--surface)}
     <div class="grid kpis" id="acKpis" style="margin-top:14px"></div>
     <details id="acCfg" style="margin-top:12px"><summary class="flabel" style="cursor:pointer">Regras de limite</summary>
       <div class="row" style="margin:12px 0">
-        <label class="flabel" for="acMode">Limitar por</label><select id="acMode"><option value="funcao">Função</option><option value="grupo">Grupo</option></select>
+        <label class="flabel" for="acMode">Limitar por</label><select id="acMode"><option value="funcao">Função</option><option value="grupo">Grupo</option><option value="equipe">Equipe (hierarquia)</option></select>
         <label class="flabel" for="acGest">Máx. gestores fora juntos</label><input id="acGest" type="number" min="0" max="17" style="width:70px">
         <label class="flabel" for="acShift">Deslocamento preferido até</label><input id="acShift" type="number" min="7" max="365" style="width:80px"><span class="flabel">dias</span>
         <button class="btn" id="acDef">Restaurar padrão (10% do quadro)</button>
@@ -330,7 +338,7 @@ dialog#acDlg .tablewrap{background:var(--surface)}
   <div class="card">
     <div class="row" style="justify-content:space-between;margin-bottom:10px">
       <div><h2>Linha do tempo por colaborador</h2><p class="sub" style="margin:0">Passe o mouse sobre a barra para ver datas, retorno e limite concessivo</p></div>
-      <div class="row"><span class="flabel">Ordenar</span><select id="tlsort"><option value="ini">Início das férias</option><option value="nome">Nome</option><option value="grp">Grupo</option></select></div>
+      <div class="row"><span class="flabel">Ordenar</span><select id="tlsort"><option value="ini">Início das férias</option><option value="nome">Nome</option><option value="grp">Grupo</option><option value="hier">Hierarquia (GO › GA)</option></select></div>
     </div>
     <div class="legend" style="margin-bottom:10px"><span><i style="background:var(--p1)"></i>1º período</span><span><i style="background:var(--p2)"></i>2º período</span><span><i style="background:var(--p3)"></i>3º período</span><span><i style="background:var(--hol)"></i>Feriado</span><span><i style="background:var(--bad)"></i>Hoje</span><span><i style="background:transparent;outline:2px solid var(--bad)"></i>Com alerta</span></div>
     <div class="gantt" id="gantt"></div>
@@ -355,6 +363,17 @@ dialog#acDlg .tablewrap{background:var(--surface)}
     <div class="card"><h2>Pares que se sobrepõem</h2><p class="sub">Dias úteis em comum entre dois gestores</p><div class="tablewrap"><table id="tPair"></table></div></div>
   </div>
   <div class="card"><h2>Linha do tempo da gestão</h2><p class="sub">Uma linha por gestor</p><div class="gantt" id="ganttG"></div></div>
+</section>
+
+<!-- HIERARQUIA -->
+<section data-p="hier" class="grid" hidden>
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start">
+    <div style="flex:1 1 380px;min-width:0"><h2>Hierarquia</h2><p class="sub" style="margin:0" id="hsrc"></p>
+      <p class="sub" style="margin:8px 0 0">Gerente de operações (GO) → gestor de área (GA) → colaboradores. Para o anti-colisão limitar por equipe do gestor, escolha "Equipe (hierarquia)" em Linha do tempo › Regras de limite; em Capacidade, agrupe por equipe.</p></div>
+    <div class="row"><label class="btn" for="hup">Carregar hierarquia .xlsx</label><input id="hup" type="file" accept=".xlsx,.xlsm,.xls" hidden><button class="btn" id="hreset" hidden>Usar a hierarquia embutida</button><span class="flabel" id="hmsg" role="status"></span></div>
+  </div></div>
+  <div class="grid kpis" id="hkpis"></div>
+  <div class="grid" id="hgos"></div>
 </section>
 
 <!-- CONFORMIDADE -->
@@ -498,15 +517,40 @@ function build(raw){
   return {all,gest,natHol,holName,isBiz,rs,re,diverg,qual,arquivo:raw.arquivo};
 }
 
+const HIER_EMB={"arquivo":"HIERARQUIA.xlsx","rows":[["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","ANDERSON MARQUES BRAZ"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","CESARIO RUBERVAL FREITAS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","EDVALDO VIEIRA DO NASCIMENTO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","DZAJIC BORGES DE SOUZA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","JOSE NETO DA SILVA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","GUTEMBERG LUIZ AMORIM DE LYRA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","SILVIO CESAR DA SILVA GUEDES"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","BRUNO DE SOUSA SANTOS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","DANIEL DOS SANTOS FREITAS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","JOSE ROBERTO RIBEIRO DA SILVA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","IGOR RAFAEL DE SOUSA GUEDES"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","JUCIGLEYSON DE CARVALHO SOUZA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","RONIEL DINIZ FREIRE"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","VITOR KELVIN CASTRO DA ROCHA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","CLAUDIO DE SOUSA VISGUEIRA","DARLEI FERREIRA DOS SANTOS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","ALBERO DE SOUZA LEITE"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","BRUNO DE SOUSA DO NASCIMENTO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","GEARDSON PEREIRA OLIVEIRA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","LEONARDO PEREIRA SANTOS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","JOSE PEDRO DOS SANTOS FRANCO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","THALES FERREIRA LIMA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","PEDRO LUCAS SOUZA MARTINS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","JAMILTON DE SOUSA CASTRO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","JEFFERSON MACEDO ALVES"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","JHON LENON SOUSA NETO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","MACKLOUVE DA SILVA BARBOSA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","RICARDO WILATO SILVA COSTA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","RUAN LUCAS DOS SANTOS FRANCO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","TARCILIO MENDES LEMOS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MARCOS RODRIGUES CARVALHO","ADRIANO CAZUZA ALVES"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","DINALDO RODRIGUES DA SILVA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","LEONARDO ALCANTARA LEMOS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","WELLINGTON PEREIRA DA SILVA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","FRANCISCO CARLOS SOUSA SANTOS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","GABRIEL OLIVEIRA DE ARAUJO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","JERCILIO CLAUDINO ALVES"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","JOSE DA ROCHA DIAS RODRIGUES"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","SALOMAO FREITAS SILVA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","GLEISON RODRIGUES DE SOUSA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","JONAS FELIPE FEITOSA CUNHA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","JOSE NILTON DA SILVA SOUSA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","JOSIMAR BEZERRA CRUZ"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","KLERISON LUCAS NASCIMENTO SAMPAIO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","LUCAS JUNIEL ANDRADE DE SOUSA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","VAGNER NERIS GOMES DA SILVA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","WALDECY RODRIGUES DA SILVA ALVES FILHO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","WILSON RODRIGUES OLIVEIRA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","MIGUEL BARROS DE CARVALHO JUNIOR","BRUNO DE ASSIS DA SILVA SOBRAL"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","ANDERSON BARBOSA MARINHO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","ANDRE LIMA DE MELO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","CICERO SANTOS ALVES"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","DEMI RODRIGUES SOUSA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","EDUARDO TAVARES DE SOUSA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","JOAO VICTOR SOUSA CARVALHO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","FRANCISCO ARTUR DA SILVA LIMA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","GENIELSON MOREIRA OLIVEIRA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","JOSE LUIS DO NASCIMENTO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","TIAGO ALVES BARBOSA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","MARIO SARAIVA BANDEIRA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","KASSIANO SANTANA DOS SANTOS"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","MATEUS NUNES PEREIRA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","NELSON BARBOSA DE SOUZA JUNIOR"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","ALEX BARROS CARNEIRO"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","ANTONIO JOSE ALVES PEREIRA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","TIAGO DA CONCEICAO DA SILVA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","VITOR HUGO RODRIGUES DE SOUSA"],["IVANDRO PESSOA DA NOBREGA ALENCAR","RAFAEL NUNES DO NASCIMENTO","DENILSON RODRIGUES SOUSA"],["WANDERSON MARCELLUS PENHA COSTA","WAGNER LUZ FIGUEIREDO","LUCAS TEIXEIRA DA CONCEICAO DE LIMA"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","CLAUDIOMIR DE SOUSA"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","DANIEL LIMA E SILVA"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","EUFRASIO LUSTOSA DE SOUSA SOARES"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","HENRIQUE PAULO DE ARAUJO GOMES FILHO"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","JAILTON ALVES DE LIMA"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","LUAN WAGNER SIQUEIRA ROMEU"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","LUCAS LIMA ALVES BARROS"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","LUIS FRANCISCO DA SILVA"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","MOISES RAMOS DE LIMA"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","PEDRO HENRIQUE SILVA OLIVEIRA"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","RAFAEL COSTA LIMA"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","RAIMUNDO NONATO ARAUJO DA SILVA"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","DIEGO CANIGGIA DA SILVA CARVALHO"],["WALMIR FERNANDES DA SILVA","DASHIEL DOSTOIEVSKI SALES SOARES","WERBERT PEREIRA DOS SANTOS"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","FELIPE SOUSA QUIRINO"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","FRANCINILDO JANSEN MARINHO"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","FRANCISCO DAS CHAGAS SANTANA DE SOUSA"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","ISAIAS DE JESUS MACIEL SAMPAIO"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","LUIS HENRIQUE MENDES COSTA"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","LUIS VANOEL AMARAL QUIRINO"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","NATAN PADILHA PINHEIRO"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","PAULO VICTOR TRINDADE MUNIZ"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","RAFAEL COSTA BARROS"],["WALMIR FERNANDES DA SILVA","FRANCISCO SALES FURTADO JUNIOR","SUELTO DA COSTA GALVAO"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","ANTONIO FERREIRA DE CARVALHO CUNHA"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","CARLOS HENRIQUE FREITAS GOMES"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","ERIK RAYKAR SANTOS SOUSA"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","FRANCISCO EDNELTON PAULINO DA SILVA"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","GILSON RODRIGUES MARQUES"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","HELTON RAFAEL REIS DE SOUSA"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","HERBERT LUCAS BARROS SILVA"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","HUMBERTO DA SILVA RAMOS"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","MANOEL VIVALDO DA COSTA FILHO"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","MARCIO ANDRE CUTRIM COSTA"],["WALMIR FERNANDES DA SILVA","LEONARDO CARDOSO SILVA","MARCIO MOURA"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","ANDRE FELIPE SOUSA SILVA"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","ANDRE SANTOS PEREIRA"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","ANTONIO JOSE BISPO DA CUNHA"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","DAVID WESLLEM DE SOUSA BALDEZ"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","DIEGO DA CONCEICAO DE CARVALHO"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","FRANCISCO DE ASSIS DA CONCEICAO DOS SANTOS"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","GABRIEL LEITE BARBOSA"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","ISRAEL COSTA DA SILVA"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","LUIS CARLOS DE SOUSA RIBEIRO JUNIOR"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","MATHEUS SANTOS DE SOUSA"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","RAVEL DA SILVA FERREIRA"],["WALMIR FERNANDES DA SILVA","NAAN CARLOS CABRAL OLIVEIRA","VALMIR MORAIS SILVA"],["WALMIR FERNANDES DA SILVA","ROBERVAL SILVA RODRIGUES","ELISVALDO DE ARAUJO"],["WALMIR FERNANDES DA SILVA","ROBERVAL SILVA RODRIGUES","FELIX MACHADO OLIVEIRA"],["WALMIR FERNANDES DA SILVA","ROBERVAL SILVA RODRIGUES","FLAVIO ANTONIO ESTEVAM AROUCHE"],["WALMIR FERNANDES DA SILVA","ROBERVAL SILVA RODRIGUES","FRANCISCO ALVES FILHO"],["WALMIR FERNANDES DA SILVA","ROBERVAL SILVA RODRIGUES","GUILHERME FRANCISCO CAVALCANTE LACERDA"],["WALMIR FERNANDES DA SILVA","ROBERVAL SILVA RODRIGUES","LUCAS DOS SANTOS CUTRIM"],["WALMIR FERNANDES DA SILVA","ROBERVAL SILVA RODRIGUES","LUCAS WESLEY DOS SANTOS TRINDADE"],["WALMIR FERNANDES DA SILVA","ROBERVAL SILVA RODRIGUES","PAULO HENRIQUE REIS DE SOUSA"],["WALMIR FERNANDES DA SILVA","ROBERVAL SILVA RODRIGUES","SOSTENES DOS SANTOS PINHEIRO"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","ANTONIO PEDRO DE OLIVEIRA"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","EMANOEL DE SOUSA MACIEL"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","EMANUEL BEZERRA LIMA"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","EMISSON BARBOSA PAIVA"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","FRANCISCO CARLOS ALVES DA SILVA"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","LUCAS SOUSA SILVA"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","RAIMUNDO NONATO BEZERRA LIMA"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","SILVERIO SOARES BARROS"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","SILVINO DOS SANTOS BARROS"],["WALMIR FERNANDES DA SILVA","RUAN LABRE GABRIEL DA SILVA","SIRLAN DOS SANTOS BARROS"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","CLEMILTON MENDES DA SILVA"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","ELTON JONES SOUSA DINIZ"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","EMIDIO BRUNO COSTA NETO"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","IGOR HENRIQUE DO NASCIMENTO DE LIMA"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","LEANDRO RODRIGUES DA SILVA"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","MARCELLO LUIZ SOUZA"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","MOISES AMORIM VIANA"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","ROMULO JOSE DO VALE ARAUJO"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","RONILDO VASCONCELOS SOUZA"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","JOSIVAL DA PAZ TORRES"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","AFONSO HENRIQUE PINHEIRO LAUNE"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","MAURICIO ALVES PIRES"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","LELIO OLIVEIRA DE ARAUJO"],["WANDERSON MARCELLUS PENHA COSTA","ALEKSEI THOMAS OLIVEIRA DE ABREU","ROGERIO BALDUINO DA CONCEICAO SILVA"],["WANDERSON MARCELLUS PENHA COSTA","WAGNER LUZ FIGUEIREDO","ADRIANO SANTOS DA SILVA"],["WANDERSON MARCELLUS PENHA COSTA","WAGNER LUZ FIGUEIREDO","MAMEDE BARROS MONTEIRO FILHO"],["WANDERSON MARCELLUS PENHA COSTA","WAGNER LUZ FIGUEIREDO","RENATO RODRIGUES SILVA"],["WANDERSON MARCELLUS PENHA COSTA","","ALEKSEI THOMAS OLIVEIRA DE ABREU"]]};
+// Hierarquia GO › GA › colaborador. Nomes casam pela grafia exata ou ignorando da/de/do/dos/das/e.
+const hkey=s=>norm(s).replace(/\b(DA|DE|DO|DAS|DOS|E)\b/g,' ').replace(/\s+/g,' ').trim();
+let HIER=HIER_EMB;try{const h=JSON.parse(localStorage.getItem('ferias_hier')||'null');if(h&&Array.isArray(h.rows)&&h.rows.length)HIER=h}catch(e){}
+function attachHier(){
+  const rows=HIER.rows.map(r=>r.map(v=>String(v??'').trim().toUpperCase()));
+  const GOS=new Set(rows.map(r=>r[0]).filter(Boolean)),GAS=new Set(rows.map(r=>r[1]).filter(Boolean));
+  rows.forEach(r=>{if(r[0]&&!r[1]&&r[2]&&!GOS.has(r[2]))GAS.add(r[2])});
+  const byN=new Map(),byK=new Map();M.all.forEach(p=>{byN.set(norm(p.nome),p);const k=hkey(p.nome);byK.set(k,byK.has(k)?null:p)});
+  const fuzzy=[],missing=[],memo=new Map(),boss={};
+  const res=hn=>{if(memo.has(hn))return memo.get(hn);let p=byN.get(norm(hn))||null;if(!p){p=byK.get(hkey(hn))||null;if(p)fuzzy.push([hn,p.nome])}if(!p)missing.push(hn);memo.set(hn,p);return p};
+  const nm=hn=>{const p=res(hn);return p?p.nome:hn};
+  M.all.forEach(p=>Object.assign(p,{hLvl:null,hGo:null,hGa:null,hTeam:'(SEM HIERARQUIA)'}));
+  const gos=new Map();
+  const goOf=go=>{const n=nm(go);if(!gos.has(n))gos.set(n,{nome:n,p:res(go),gas:new Map()});return gos.get(n)};
+  const gaOf=(go,ga)=>{const G=goOf(go),n=nm(ga);if(!G.gas.has(n))G.gas.set(n,{nome:n,p:res(ga),go:G.nome,members:[],team:'EQUIPE '+n});return G.gas.get(n)};
+  rows.forEach(([go,ga,nome])=>{if(!go)return;goOf(go);
+    if(ga){const A=gaOf(go,ga);if(nome&&!GAS.has(nome)&&!GOS.has(nome)){boss[nome]='GA '+A.nome;const p=res(nome);if(p&&!p.hLvl){A.members.push(p);Object.assign(p,{hLvl:'COL',hGo:goOf(go).nome,hGa:A.nome,hTeam:A.team})}}}
+    else if(nome&&GAS.has(nome))gaOf(go,nome)});
+  gos.forEach(G=>{if(G.p)Object.assign(G.p,{hLvl:'GO',hGo:G.nome,hGa:null,hTeam:'GERENCIA DE OPERACOES'});
+    G.gas.forEach(A=>{boss[A.nome]='GO '+G.nome;if(A.p)Object.assign(A.p,{hLvl:'GA',hGo:G.nome,hGa:A.nome,hTeam:'GESTORES DE AREA DE '+G.nome})})});
+  const byName=new Map(M.all.map(p=>[p.nome,p]));M.gest.forEach(g=>{const p=byName.get(g.nome);['hLvl','hGo','hGa','hTeam'].forEach(k=>g[k]=p?p[k]:(k==='hTeam'?'(SEM HIERARQUIA)':null))});
+  M.hier={gos:[...gos.values()].map(G=>({nome:G.nome,p:G.p,gas:[...G.gas.values()]})),semHier:M.all.filter(p=>!p.hLvl),missing:[...new Set(missing)],fuzzy,boss}}
+function bizDaysBoth(a,b){const out=new Set();a.per.forEach(q=>b.per.forEach(r=>{for(let d=Math.max(q.ini,r.ini);d<=Math.min(q.fim,r.fim);d++)if(M.isBiz(d,M.natHol))out.add(d)}));return[...out].sort((x,y)=>x-y)}
+
 // ---------- state & filters ----------
-const st={grp:new Set(),fun:'',mes:'',q:'',tab:'geral',day:null,sort:'ini',bsort:['nome',1],capMode:'grupo',capSel:null};
+const st={grp:new Set(),fun:'',go:'',ga:'',hOpen:new Set(),mes:'',q:'',tab:'geral',day:null,sort:'ini',bsort:['nome',1],capMode:'grupo',capSel:null};
 try{const t=localStorage.getItem('ferias_tab');if(t)st.tab=t;const c=localStorage.getItem('ferias_cap');if(c)st.capMode=c}catch(e){}
 if(!document.querySelector(`.tab[data-t="${st.tab}"]`))st.tab='geral';
-try{const f=JSON.parse(localStorage.getItem('ferias_filt')||'{}');if(Array.isArray(f.grp))f.grp.forEach(g=>st.grp.add(g));if(typeof f.fun==='string')st.fun=f.fun;if(typeof f.mes==='string')st.mes=f.mes;if(typeof f.q==='string')st.q=f.q}catch(e){}
-const saveFilt=()=>{try{localStorage.setItem('ferias_filt',JSON.stringify({grp:[...st.grp],fun:st.fun,mes:st.mes,q:st.q}))}catch(e){}};
-const hasFilt=()=>!!(st.grp.size||st.fun||st.mes||st.q.trim());
+try{const f=JSON.parse(localStorage.getItem('ferias_filt')||'{}');if(Array.isArray(f.grp))f.grp.forEach(g=>st.grp.add(g));if(typeof f.fun==='string')st.fun=f.fun;if(typeof f.mes==='string')st.mes=f.mes;if(typeof f.q==='string')st.q=f.q;if(typeof f.go==='string')st.go=f.go;if(typeof f.ga==='string')st.ga=f.ga}catch(e){}
+const saveFilt=()=>{try{localStorage.setItem('ferias_filt',JSON.stringify({grp:[...st.grp],fun:st.fun,mes:st.mes,q:st.q,go:st.go,ga:st.ga}))}catch(e){}};
+const hasFilt=()=>!!(st.grp.size||st.fun||st.go||st.ga||st.mes||st.q.trim());
 function inMonth(p){if(!st.mes)return true;const k=+st.mes;return p.per.some(q=>mkey(q.ini)<=k&&mkey(q.fim)>=k)}
-function filt(){const q=norm(st.q.trim());return M.all.filter(p=>(!st.grp.size||st.grp.has(p.grupo))&&(!st.fun||p.funcao===st.fun)&&(!q||norm(p.nome).includes(q))&&inMonth(p))}
+function filt(){const q=norm(st.q.trim());return M.all.filter(p=>(!st.grp.size||st.grp.has(p.grupo))&&(!st.fun||p.funcao===st.fun)&&(!st.go||p.hGo===st.go)&&(!st.ga||p.hGa===st.ga)&&(!q||norm(p.nome).includes(q))&&inMonth(p))}
 function daily(list,rs,re){const n=re-rs+1,a=new Int16Array(n);list.forEach(p=>p.per.forEach(q=>{for(let d=Math.max(q.ini,rs);d<=Math.min(q.fim,re);d++)a[d-rs]++}));return a}
 function outOn(list,d){return list.filter(p=>p.per.some(q=>q.ini<=d&&q.fim>=d))}
 
@@ -516,6 +560,10 @@ function setupFilters(){
   if(st.fun&&!M.all.some(p=>p.funcao===st.fun))st.fun='';
   if(st.mes&&(+st.mes<mkey(M.rs)||+st.mes>mkey(M.re)))st.mes='';
   document.getElementById('fq').value=st.q;
+  const HH=M.hier;if(st.go&&!HH.gos.some(g=>g.nome===st.go))st.go='';
+  const gaList=HH.gos.filter(g=>!st.go||g.nome===st.go).flatMap(g=>g.gas);if(st.ga&&!gaList.some(a=>a.nome===st.ga))st.ga='';
+  document.getElementById('fgo').innerHTML='<option value="">Todos</option>'+HH.gos.map(g=>`<option value="${esc(g.nome)}" ${g.nome===st.go?'selected':''}>${esc(title(g.nome))}</option>`).join('');
+  document.getElementById('fga').innerHTML='<option value="">Todos</option>'+gaList.map(a=>`<option value="${esc(a.nome)}" ${a.nome===st.ga?'selected':''}>${esc(title(a.nome))}</option>`).join('');
   document.getElementById('fgrp').innerHTML=GROUPS.filter(g=>counts[g[0]]).map(g=>`<button class="chip" aria-pressed="${st.grp.has(g[0])}" data-g="${g[0]}"><i style="background:var(${g[1]})"></i>${g[0]} · ${counts[g[0]]}</button>`).join('');
   const funs=[...new Set(M.all.map(p=>p.funcao))].sort();
   document.getElementById('ffun').innerHTML='<option value="">Todas</option>'+funs.map(f=>`<option ${f===st.fun?'selected':''}>${esc(f)}</option>`).join('');
@@ -525,9 +573,11 @@ function setupFilters(){
 }
 document.getElementById('fgrp').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const g=b.dataset.g;st.grp.has(g)?st.grp.delete(g):st.grp.add(g);b.setAttribute('aria-pressed',st.grp.has(g));render()});
 document.getElementById('ffun').addEventListener('change',e=>{st.fun=e.target.value;render()});
+document.getElementById('fgo').addEventListener('change',e=>{st.go=e.target.value;st.ga='';setupFilters();render()});
+document.getElementById('fga').addEventListener('change',e=>{st.ga=e.target.value;render()});
 document.getElementById('fmes').addEventListener('change',e=>{st.mes=e.target.value;st.day=null;render()});
 document.getElementById('fq').addEventListener('input',e=>{st.q=e.target.value;render()});
-document.getElementById('fclear').addEventListener('click',()=>{st.grp.clear();st.fun='';st.mes='';st.q='';st.day=null;setupFilters();render()});
+document.getElementById('fclear').addEventListener('click',()=>{st.grp.clear();st.fun='';st.go='';st.ga='';st.mes='';st.q='';st.day=null;setupFilters();render()});
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{st.tab=t.dataset.t;try{localStorage.setItem('ferias_tab',st.tab)}catch(e){}render()}));
 
 // ---------- charts ----------
@@ -628,11 +678,11 @@ document.getElementById('heat').addEventListener('click',e=>{const c=e.target.cl
 document.getElementById('heat').addEventListener('keydown',e=>{if(e.key==='Enter'){const c=e.target.closest('.hc[data-d]');if(c){st.day=+c.dataset.d;renderDay(filt())}}});
 
 // ---------- capacidade ----------
-function capsFor(mode){const key=p=>mode==='funcao'?'F|'+p.funcao:'G|'+p.grupo;const n={};M.all.forEach(p=>{const k=key(p);n[k]=(n[k]||0)+1});const caps={};Object.keys(n).forEach(k=>{caps[k]=AC.caps[k]!=null?AC.caps[k]:Math.max(1,Math.ceil(n[k]*.10))});return{n,caps,key}}
+function capsFor(mode){const key=p=>mode==='funcao'?'F|'+p.funcao:mode==='equipe'?'E|'+p.hTeam:'G|'+p.grupo;const n={};M.all.forEach(p=>{const k=key(p);n[k]=(n[k]||0)+1});const caps={};Object.keys(n).forEach(k=>{caps[k]=AC.caps[k]!=null?AC.caps[k]:Math.max(1,Math.ceil(n[k]*.10))});return{n,caps,key}}
 function renderCap(){
   document.getElementById('capMode').value=st.capMode;
   const{n,caps,key}=capsFor(st.capMode);const{rs,re}=M;
-  const members={};M.all.forEach(p=>{if((st.grp.size&&!st.grp.has(p.grupo))||(st.fun&&p.funcao!==st.fun))return;const k=key(p);(members[k]||(members[k]=[])).push(p)});
+  const members={};M.all.forEach(p=>{if((st.grp.size&&!st.grp.has(p.grupo))||(st.fun&&p.funcao!==st.fun)||(st.go&&p.hGo!==st.go)||(st.ga&&p.hGa!==st.ga))return;const k=key(p);(members[k]||(members[k]=[])).push(p)});
   const keys=Object.keys(members).sort((a,b)=>n[b]-n[a]||a.localeCompare(b));
   const w0=rs-((dow(rs)+6)%7);const weeks=[];for(let w=w0;w<=re;w+=7)weeks.push(w);
   const val={},top=[],overW=new Set(),overByK={};let maxPct=0,maxPctK='',maxPctW=0;
@@ -672,7 +722,7 @@ document.getElementById('capMode').addEventListener('change',e=>{st.capMode=e.ta
 
 function gantt(el,L,sort){
   const {rs,re}=M,px=window.innerWidth<640?2:3,W=(re-rs+1)*px;
-  L=[...L];if(sort==='nome')L.sort((a,b)=>a.nome.localeCompare(b.nome));else if(sort==='grp')L.sort((a,b)=>a.grupo.localeCompare(b.grupo)||(a.per[0]?.ini??1e9)-(b.per[0]?.ini??1e9));else L.sort((a,b)=>(Math.min(...a.per.map(q=>q.ini),1e9))-(Math.min(...b.per.map(q=>q.ini),1e9)));
+  L=[...L];if(sort==='nome')L.sort((a,b)=>a.nome.localeCompare(b.nome));else if(sort==='hier'){const lv={GO:0,GA:1,COL:2};L.sort((a,b)=>(a.hGo?0:1)-(b.hGo?0:1)||(a.hGo||'').localeCompare(b.hGo||'')||(a.hGa?0:1)-(b.hGa?0:1)||(a.hGa||'').localeCompare(b.hGa||'')||(lv[a.hLvl]??3)-(lv[b.hLvl]??3)||a.nome.localeCompare(b.nome))}else if(sort==='grp')L.sort((a,b)=>a.grupo.localeCompare(b.grupo)||(a.per[0]?.ini??1e9)-(b.per[0]?.ini??1e9));else L.sort((a,b)=>(Math.min(...a.per.map(q=>q.ini),1e9))-(Math.min(...b.per.map(q=>q.ini),1e9)));
   let mh='',ml='',hl='';for(let k=mkey(rs);k<=mkey(re);k++){const d=Date.UTC(Math.floor(k/12),k%12,1)/864e5;const x=(d-rs)*px;mh+=`<div class="gm" style="left:${x}px">${mlabel(k)}</div>`;ml+=`<div class="gline" style="left:${x}px"></div>`}
   M.natHol.forEach(d=>{if(d>=rs&&d<=re)hl+=`<div class="ghol" style="left:${(d-rs)*px}px" title="${esc(M.holName[d]||'Feriado')}"></div>`});
   if(TODAY>=rs&&TODAY<=re)hl+=`<div class="gtoday" style="left:${(TODAY-rs)*px}px"></div>`;
@@ -731,12 +781,12 @@ function renderConf(L){
     return`<tr><td>${edBtn(p)}${esc(title(p.nome))}${p.gest?' <span class="pill ok">gestão</span>':''}</td><td>${esc(title(p.funcao))}</td><td>${p.adm!=null?br(p.adm):''}</td><td>${p.per.map(q=>`${DOW[dow(q.ini)]} ${brs(q.ini)} · ${q.dias}d`).join('<br>')}</td><td>${p.issues.map(i=>`<span class="pill ${SEV(i)}">${esc(i)}</span>`).join(' ')}</td><td style="white-space:normal;min-width:240px">${esc(sug)}</td></tr>`}).join('')||'<tr><td colspan="6">Nenhum alerta no filtro atual.</td></tr>'}</tbody>`;
 }
 
-const BCOLS=[['lock',''],['ed',''],['nome','Colaborador'],['funcao','Função'],['grupo','Grupo'],['adm','Admissão'],['p1','1º início'],['d1','Dias'],['f1','Fim'],['r1','Retorno'],['p2','2º início'],['d2','Dias'],['f2','Fim'],['r2','Retorno'],['p3','3º início'],['d3','Dias'],['f3','Fim'],['r3','Retorno'],['tot','Total'],['saldo','Saldo'],['lim','Limite concessivo'],['folga','Folga'],['alerta','Alerta']];
+const BCOLS=[['lock',''],['ed',''],['nome','Colaborador'],['funcao','Função'],['grupo','Grupo'],['hGo','GO'],['hGa','GA'],['adm','Admissão'],['p1','1º início'],['d1','Dias'],['f1','Fim'],['r1','Retorno'],['p2','2º início'],['d2','Dias'],['f2','Fim'],['r2','Retorno'],['p3','3º início'],['d3','Dias'],['f3','Fim'],['r3','Retorno'],['tot','Total'],['saldo','Saldo'],['lim','Limite concessivo'],['folga','Folga'],['alerta','Alerta']];
 const BNUM=/^(d\d|tot|saldo|folga)$/;
 function bval(p,k){if(k==='lock')return isLocked(p)?1:0;if(k==='ed')return isEdited(p)?1:0;const m=k.match(/^([pdfr])(\d)$/);if(m){const q=p.per[+m[2]-1];if(!q)return null;return m[1]==='p'?q.ini:m[1]==='d'?q.dias:m[1]==='f'?q.fim:q.ret}return p[k]}
 function renderBase(L){
   const[k,dir]=st.bsort;L=[...L].sort((a,b)=>{const x=bval(a,k),y=bval(b,k);if(x==null)return 1;if(y==null)return -1;return(typeof x==='number'?x-y:String(x).localeCompare(String(y)))*dir});
-  const cell=(p,k)=>{if(k==='lock')return lockBtn(p);if(k==='ed')return edBtn(p);const v=bval(p,k);if(v==null)return'';if(/^p\d$/.test(k)&&p.moved){const q=p.per[+k[1]-1],o=p.orig.find(x=>x.k===q.k);if(!o||o.ini!==q.ini)return`<b style="color:var(--warn)" title="Original: ${o?br(o.ini):'—'}">${br(v)}</b>`}if(/^[prf]\d$/.test(k)||k==='adm'||k==='lim')return br(v);if(k==='folga')return v<0?`<span class="pill bad">${v} d</span>`:v<30?`<span class="pill warn">${v} d</span>`:`${v} d`;if(k==='saldo')return v?(p.tot===20?`<span title="20 dias: provável abono pecuniário">${v}*</span>`:v):'';if(k==='alerta')return`<span class="pill ${SEV(v)}">${esc(v)}</span>`;if(k==='nome'||k==='funcao')return esc(title(v));return esc(v)};
+  const cell=(p,k)=>{if(k==='lock')return lockBtn(p);if(k==='ed')return edBtn(p);const v=bval(p,k);if(v==null)return'';if(/^p\d$/.test(k)&&p.moved){const q=p.per[+k[1]-1],o=p.orig.find(x=>x.k===q.k);if(!o||o.ini!==q.ini)return`<b style="color:var(--warn)" title="Original: ${o?br(o.ini):'—'}">${br(v)}</b>`}if(/^[prf]\d$/.test(k)||k==='adm'||k==='lim')return br(v);if(k==='folga')return v<0?`<span class="pill bad">${v} d</span>`:v<30?`<span class="pill warn">${v} d</span>`:`${v} d`;if(k==='saldo')return v?(p.tot===20?`<span title="20 dias: provável abono pecuniário">${v}*</span>`:v):'';if(k==='alerta')return`<span class="pill ${SEV(v)}">${esc(v)}</span>`;if(k==='nome'||k==='funcao'||k==='hGo'||k==='hGa')return esc(title(v));return esc(v)};
   document.getElementById('tBase').innerHTML=`<thead><tr>${BCOLS.map(([c,l])=>`<th data-k="${c}" class="${BNUM.test(c)?'num':''}">${l}${k===c?(dir>0?' ▲':' ▼'):''}</th>`).join('')}</tr></thead><tbody>${L.map(p=>`<tr>${BCOLS.map(([c])=>`<td class="${BNUM.test(c)?'num':''}">${cell(p,c)}</td>`).join('')}</tr>`).join('')}</tbody>`;
 }
 document.getElementById('tBase').addEventListener('click',e=>{const th=e.target.closest('th[data-k]');if(!th)return;const k=th.dataset.k;st.bsort=[k,st.bsort[0]===k?-st.bsort[1]:1];renderBase(filt())});
@@ -756,7 +806,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('.lk');if(!b)retu
 const AC={mode:'funcao',gestCap:2,maxShift:90,caps:{},res:null};
 try{Object.assign(AC,JSON.parse(localStorage.getItem('ferias_ac')||'{}'));AC.res=null}catch(e){}
 const saveAC=()=>{try{localStorage.setItem('ferias_ac',JSON.stringify({mode:AC.mode,gestCap:AC.gestCap,maxShift:AC.maxShift,caps:AC.caps}))}catch(e){}};
-const acKey=p=>(AC.mode==='funcao'?'F|'+p.funcao:'G|'+p.grupo);
+const acKey=p=>(AC.mode==='funcao'?'F|'+p.funcao:AC.mode==='equipe'?'E|'+p.hTeam:'G|'+p.grupo);
 const acKeys=p=>{const k=[acKey(p)];if(AC.gestCap>0&&p.grupo==='Gestão')k.push('GESTAO');return k};
 function acCapsFor(){const r=capsFor(AC.mode);r.caps.GESTAO=AC.gestCap;return r}
 function acMeasure(){const{caps}=acCapsFor();const R0=M.rs,len=M.re-M.rs+800;const cnt={};const ex=new Uint8Array(len);let exc=0;
@@ -816,7 +866,7 @@ function renderAC(){
   const{n,caps}=acCapsFor();const m=acMeasure();
   document.getElementById('acMode').value=AC.mode;document.getElementById('acGest').value=AC.gestCap;document.getElementById('acShift').value=AC.maxShift;
   const keys=Object.keys(n).sort((a,b)=>n[b]-n[a]);
-  document.getElementById('acCaps').innerHTML=`<thead><tr><th>${AC.mode==='funcao'?'Função':'Grupo'}</th><th class="num">Pessoas</th><th class="num">Pico atual</th><th class="num">Limite simultâneo</th></tr></thead><tbody>${keys.map(k=>`<tr><td>${esc(title(k.slice(2)))}</td><td class="num">${n[k]}</td><td class="num"><span class="pill ${m.peak[k]>caps[k]?'warn':'ok'}">${m.peak[k]||0}</span></td><td class="num"><input type="number" min="1" max="${n[k]}" value="${caps[k]}" data-k="${esc(k)}" style="width:70px" aria-label="Limite ${esc(k.slice(2))}"></td></tr>`).join('')}${AC.gestCap>0?`<tr><td><b>Gestão (todos juntos)</b></td><td class="num">${M.all.filter(p=>p.grupo==='Gestão').length}</td><td class="num"><span class="pill ${(m.peak.GESTAO||0)>AC.gestCap?'warn':'ok'}">${m.peak.GESTAO||0}</span></td><td class="num">${AC.gestCap}</td></tr>`:''}</tbody>`;
+  document.getElementById('acCaps').innerHTML=`<thead><tr><th>${{funcao:'Função',grupo:'Grupo',equipe:'Equipe'}[AC.mode]||'Grupo'}</th><th class="num">Pessoas</th><th class="num">Pico atual</th><th class="num">Limite simultâneo</th></tr></thead><tbody>${keys.map(k=>`<tr><td>${esc(title(k.slice(2)))}</td><td class="num">${n[k]}</td><td class="num"><span class="pill ${m.peak[k]>caps[k]?'warn':'ok'}">${m.peak[k]||0}</span></td><td class="num"><input type="number" min="1" max="${n[k]}" value="${caps[k]}" data-k="${esc(k)}" style="width:70px" aria-label="Limite ${esc(k.slice(2))}"></td></tr>`).join('')}${AC.gestCap>0?`<tr><td><b>Gestão (todos juntos)</b></td><td class="num">${M.all.filter(p=>p.grupo==='Gestão').length}</td><td class="num"><span class="pill ${(m.peak.GESTAO||0)>AC.gestCap?'warn':'ok'}">${m.peak.GESTAO||0}</span></td><td class="num">${AC.gestCap}</td></tr>`:''}</tbody>`;
   const r=AC.res,lockN=M.all.filter(isLocked).length;
   document.getElementById('acKpis').innerHTML=kpi('Choques agora',fmt(m.exc),`pessoa-dias acima do limite em ${m.days} dia(s)`,m.exc?'warn':'ok')+
     (r?kpi('Antes do anti-colisão',fmt(r.before.exc),`pessoa-dias em ${r.before.days} dia(s)`):kpi('Limites',Object.keys(n).length+(AC.gestCap>0?1:0),'regras ativas'))+
@@ -843,7 +893,7 @@ function acProposalRows(){const rows=[];M.all.forEach(p=>{if(isEdited(p))return;
   return rows.sort((a,b)=>a.q.ini-b.q.ini||a.p.nome.localeCompare(b.p.nome))}
 function showProposal(){const r=AC.res,rows=acProposalRows(),sem=[...new Set(r.sem)];acDlg._rows=rows;
   const pessoas=new Set(rows.map(x=>x.p.nome)).size,ja=rows.filter(x=>!x.novo).length,ne=M.all.filter(isEdited).length,lk=M.all.filter(isLocked).length;
-  document.getElementById('acDS').textContent=`Limite por ${AC.mode==='funcao'?'função':'grupo'}${AC.gestCap>0?` · até ${AC.gestCap} gestores fora juntos`:''} · deslocamento preferido até ${AC.maxShift} dias${lk?` · ${lk} travado(s)`:''}${ne?` · ${ne} editado(s) à mão não entram`:''}. Nada muda no painel até você aplicar.`;
+  document.getElementById('acDS').textContent=`Limite por ${{funcao:'função',grupo:'grupo',equipe:'equipe (hierarquia)'}[AC.mode]||'grupo'}${AC.gestCap>0?` · até ${AC.gestCap} gestores fora juntos`:''} · deslocamento preferido até ${AC.maxShift} dias${lk?` · ${lk} travado(s)`:''}${ne?` · ${ne} editado(s) à mão não entram`:''}. Nada muda no painel até você aplicar.`;
   const desl=rows.map(x=>Math.abs(x.sh));
   document.getElementById('acDK').innerHTML=
     kpi('Choques',`${fmt(r.before.exc)} → ${fmt(r.after.exc)}`,`pessoa-dias acima do limite · dias com choque ${r.before.days} → ${r.after.days}`,r.after.exc?(r.after.exc<r.before.exc?'warn':'bad'):'ok')+
@@ -924,10 +974,49 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-ed]');if(!
 document.getElementById('edClearAll').addEventListener('click',()=>{if(!confirm(`Descartar as edições manuais de ${st.edits.size} colaborador(es) e voltar às datas da planilha?`))return;
   [...st.edits.keys()].forEach(n=>{const p=M.all.find(x=>x.nome===n);if(p){p.per=p.orig.map(q=>({...q}));evalP(p)}});st.edits.clear();syncGest();_gs=null;saveEdits();render()});
 
+// ---------- aba hierarquia ----------
+function renderHier(L){const H=M.hier,inL=new Set(L.map(p=>p.nome)),{rs,re}=M,{caps}=capsFor('equipe');
+  document.getElementById('hsrc').textContent=`Base: ${HIER.arquivo} · ${HIER.rows.length} linha(s)${HIER===HIER_EMB?' · embutida no painel':' · carregada neste navegador'}`;
+  document.getElementById('hreset').hidden=HIER===HIER_EMB;
+  const nGa=H.gos.reduce((s,g)=>s+g.gas.length,0),mapped=M.all.filter(p=>p.hLvl).length;
+  document.getElementById('hkpis').innerHTML=kpi('Gerentes de operações',H.gos.length,H.gos.map(g=>title(g.nome).split(' ')[0]).join(', '))+kpi('Gestores de área',nGa,'equipes na hierarquia')+
+    kpi('Colaboradores mapeados',`${mapped} de ${M.all.length}`,`${Math.round(mapped/Math.max(M.all.length,1)*100)}% da planilha de férias`,mapped===M.all.length?'ok':'warn')+
+    kpi('Sem hierarquia',H.semHier.length,'na planilha de férias, sem GO/GA',H.semHier.length?'warn':'ok')+kpi('Fora da planilha',H.missing.length,'na hierarquia, sem linha de férias',H.missing.length?'warn':'ok');
+  const per=p=>p&&p.per.length?p.per.map(q=>`${brs(q.ini)}–${brs(q.fim)}`).join(' · '):'—';
+  const peak=(P,only)=>{const a=daily(P,rs,re);let m=0,d=null;for(let i=0;i<a.length;i++){const x=rs+i;if(only&&!only.has(x))continue;if(M.isBiz(x,M.natHol)&&a[i]>m){m=a[i];d=x}}return{m,d,a}};
+  const cards=H.gos.filter(g=>!st.go||g.nome===st.go).map(g=>{const gas=g.gas.filter(a=>!st.ga||a.nome===st.ga);
+    const rows=gas.map(a=>{const P=a.members.filter(p=>inL.has(p.nome)),cap=caps['E|'+a.team]??Math.max(1,Math.ceil(a.members.length*.1)),pk=peak(P);
+      let over=0;for(let i=0;i<pk.a.length;i++)if(pk.a[i]>cap&&M.isBiz(rs+i,M.natHol))over++;
+      let gaw='—';if(a.p&&a.p.per.length){const days=new Set();a.p.per.forEach(q=>{for(let d=q.ini;d<=q.fim;d++)days.add(d)});const w=peak(P,days);gaw=w.m?`${w.m} da equipe fora junto <small style="color:var(--muted)">(pico ${brs(w.d)})</small>`:'equipe toda presente'}
+      const oth=a.p?g.gas.filter(b=>b!==a&&b.p).map(b=>[b,bizDaysBoth(a.p,b.p).length]).filter(x=>x[1]):[],goOv=a.p&&g.p?bizDaysBoth(a.p,g.p).length:0,al=P.filter(p=>p.alerta!=='OK').length;
+      return`<tr><td>${a.p?edBtn(a.p):''}<b>${esc(title(a.nome))}</b>${a.p?'':' <span class="pill warn">fora da planilha</span>'}</td><td>${per(a.p)}${a.p&&a.p.per.length&&a.p.alerta!=='OK'?` <span class="pill ${SEV(a.p.alerta)}">${esc(a.p.alerta)}</span>`:''}</td><td class="num">${P.length}${P.length!==a.members.length?` <small style="color:var(--muted)">de ${a.members.length}</small>`:''}</td><td class="num">${al?`<span class="pill warn">${al}</span>`:'<span class="pill ok">0</span>'}</td><td class="num">${pk.m}${pk.d?` <small style="color:var(--muted)">${brs(pk.d)}</small>`:''}</td><td class="num">${cap}</td><td class="num">${over?`<span class="pill ${over>10?'bad':'warn'}">${over}</span>`:'<span class="pill ok">0</span>'}</td><td style="white-space:normal;min-width:220px">${gaw}${oth.map(([b,n])=>`<br><span class="pill warn">${n} d</span> junto com o GA ${esc(title(b.nome))}`).join('')}${goOv?`<br><span class="pill warn">${goOv} d</span> junto com o GO`:''}</td></tr>`}).join('');
+    const det=gas.map(a=>{const P=a.members.filter(p=>inL.has(p.nome)).sort((x,y)=>(x.per[0]?.ini??1e9)-(y.per[0]?.ini??1e9));
+      return`<details class="hdet" data-ga="${esc(a.nome)}" ${st.hOpen.has(a.nome)?'open':''}><summary><b>Equipe de ${esc(title(a.nome))}</b> · ${P.length} pessoa(s) · linha do tempo e lista</summary><div class="gantt hg" style="margin-top:10px"></div><div class="tablewrap" style="max-height:none;margin-top:10px"><table><thead><tr><th></th><th>Colaborador</th><th>Função</th><th>Férias</th><th>Retorno</th><th>Alerta</th></tr></thead><tbody>${P.map(p=>`<tr><td>${lockBtn(p)}${edBtn(p)}</td><td>${esc(title(p.nome))}</td><td>${esc(title(p.funcao))}</td><td>${per(p)}</td><td>${p.per.map(q=>brs(q.ret)).join(' · ')||'—'}</td><td><span class="pill ${SEV(p.alerta)}">${esc(p.alerta)}</span></td></tr>`).join('')||'<tr><td colspan="6">Ninguém no filtro atual.</td></tr>'}</tbody></table></div></details>`}).join('');
+    const tot=gas.reduce((s,a)=>s+a.members.filter(p=>inL.has(p.nome)).length,0);
+    return`<div class="card"><h2>${g.p?edBtn(g.p):''}${esc(title(g.nome))}</h2><p class="sub">Gerente de operações · férias: ${per(g.p)}${g.p?'':' · fora da planilha de férias'} · ${gas.length} gestor(es) de área · ${tot} colaborador(es) no filtro</p>`+
+      `<div class="tablewrap" style="max-height:none"><table><thead><tr><th>Gestor de área</th><th>Férias do GA</th><th class="num">Equipe</th><th class="num">Alertas</th><th class="num">Pico fora</th><th class="num">Limite</th><th class="num">Dias acima</th><th>Enquanto o GA está fora</th></tr></thead><tbody>${rows||'<tr><td colspan="8">Nenhum gestor de área no filtro.</td></tr>'}</tbody></table></div>`+
+      `<div class="grid" style="gap:8px;margin-top:12px">${det}</div></div>`}).join('');
+  const sem=H.semHier.filter(p=>inL.has(p.nome));
+  const extra=(sem.length&&!st.go&&!st.ga?`<div class="card"><h2>Sem hierarquia</h2><p class="sub">Na planilha de férias, mas sem GO/GA na base de hierarquia</p><div class="list">${sem.map(p=>`<div class="li"><span>${edBtn(p)}${esc(title(p.nome))} <small style="color:var(--muted)">· ${esc(title(p.funcao))}</small></span><span>${per(p)}</span></div>`).join('')}</div></div>`:'')+
+    (H.missing.length&&!st.go&&!st.ga?`<div class="card"><h2>Fora da planilha de férias</h2><p class="sub">Na hierarquia, sem linha na planilha de férias: confira admissões recentes ou desligamentos</p><div class="list">${H.missing.map(n=>`<div class="li"><span>${esc(title(n))}</span><span><small style="color:var(--muted)">${esc(title(H.boss[n]||''))}</small></span></div>`).join('')}</div></div>`:'');
+  document.getElementById('hgos').innerHTML=cards+(extra?`<div class="grid c2">${extra}</div>`:'')}
+function drawHierGantt(d){const A=M.hier.gos.flatMap(g=>g.gas).find(a=>a.nome===d.dataset.ga);if(!A)return;const inL=new Set(filt().map(p=>p.nome));gantt(d.querySelector('.hg'),[...(A.p?[A.p]:[]),...A.members.filter(p=>inL.has(p.nome))],'ini')}
+document.getElementById('hgos').addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matches('details.hdet'))return;if(d.open){st.hOpen.add(d.dataset.ga);drawHierGantt(d)}else st.hOpen.delete(d.dataset.ga)},true);
+document.getElementById('hup').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const msg=document.getElementById('hmsg');
+  try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const ws=wb.Sheets[wb.SheetNames.find(n=>/hierarq/i.test(n))||wb.SheetNames[0]];const R=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+    const hi=R.findIndex(r=>r&&r.some(v=>/^\s*GO\s*$/i.test(String(v??'')))&&r.some(v=>/^\s*NOME\s*$/i.test(String(v??''))));if(hi<0)throw new Error('cabeçalho com as colunas GO, GA e NOME não encontrado');
+    const h=R[hi].map(v=>String(v??'').trim().toUpperCase()),cGo=h.indexOf('GO'),cGa=h.indexOf('GA'),cN=h.indexOf('NOME');
+    const rows=R.slice(hi+1).map(r=>[r[cGo],cGa>=0?r[cGa]:null,r[cN]].map(v=>v==null?'':String(v).trim())).filter(r=>r[2]);
+    if(!rows.length)throw new Error('nenhuma linha com NOME');
+    HIER={arquivo:f.name,rows};try{localStorage.setItem('ferias_hier',JSON.stringify(HIER))}catch(x){}
+    attachHier();_gs=null;st.go='';st.ga='';st.hOpen.clear();setupFilters();render();msg.textContent=`Hierarquia carregada: ${rows.length} linha(s)`}
+  catch(err){msg.textContent='Não foi possível ler: '+err.message}e.target.value=''});
+document.getElementById('hreset').addEventListener('click',()=>{HIER=HIER_EMB;try{localStorage.removeItem('ferias_hier')}catch(x){}attachHier();st.go='';st.ga='';st.hOpen.clear();setupFilters();render();document.getElementById('hmsg').textContent='Usando a hierarquia embutida'});
+
 // ---------- robozinho de inconsistências ----------
 // Varre a base a cada render (inclui edições e propostas aplicadas) e lista o que precisa de ajuste.
 const BOT={open:false,cat:'all',onlyFilt:false,greeted:false};
-const BOT_CAT=[['base','Qualidade da base'],['clt','Regras CLT'],['choque','Choques de datas'],['plan','Planejamento']];
+const BOT_CAT=[['base','Qualidade da base'],['clt','Regras CLT'],['choque','Choques de datas'],['hier','Hierarquia'],['plan','Planejamento']];
 function botScan(){
   const items=[],add=(cat,sev,txt,act={})=>items.push({cat,sev,txt,act});
   const scope=BOT.onlyFilt?new Set(filt().map(p=>p.nome)):null,inS=p=>!scope||scope.has(p.nome);
@@ -947,6 +1036,15 @@ function botScan(){
     p.per.filter(q=>q.ini<c0||q.fim>c1).forEach(q=>add('plan','info',`${nm}: ${q.k+1}º período (${br(q.ini)}) fora do calendário da planilha (jan/27 a jan/28)`,{ed:p.nome}));
     if(isEdited(p))add('plan','info',`${nm}: datas editadas no painel. Gere o relatório .xlsx para levar à planilha`,{ed:p.nome});
   });
+  // hierarquia
+  const HH=M.hier,rng=d=>`<small>· ${d.length} dia(s) útil(eis), de ${brs(d[0])} a ${br(d[d.length-1])}</small>`;
+  if(!scope){
+    if(HH.semHier.length)add('hier','warn',`<b>${HH.semHier.length} colaborador(es) sem GO/GA na hierarquia</b>: ${HH.semHier.slice(0,8).map(p=>esc(title(p.nome))).join(', ')}${HH.semHier.length>8?'…':''}`,{tab:'hier'});
+    if(HH.missing.length)add('hier','warn',`<b>${HH.missing.length} nome(s) da hierarquia sem linha na planilha de férias</b>: ${HH.missing.slice(0,8).map(n=>esc(title(n))).join(', ')}${HH.missing.length>8?'…':''}`,{tab:'hier'});
+    HH.fuzzy.forEach(([a,b])=>add('hier','info',`Grafia diferente entre as bases: <b>${esc(title(a))}</b> na hierarquia = <b>${esc(title(b))}</b> na planilha de férias`,{tab:'hier'}))}
+  HH.gos.forEach(g=>{const G=g.gas.filter(a=>a.p);
+    for(let i=0;i<G.length;i++)for(let j=i+1;j<G.length;j++){const a=G[i].p,b=G[j].p;if(scope&&!inS(a)&&!inS(b))continue;const d=bizDaysBoth(a,b);if(d.length)add('hier','warn',`<b>${esc(title(a.nome))}</b> e <b>${esc(title(b.nome))}</b>, GAs de ${esc(title(g.nome))}, fora juntos ${rng(d)}`,{day:d[0],ed:a.nome})}
+    if(g.p)G.forEach(a=>{if(scope&&!inS(a.p)&&!inS(g.p))return;const d=bizDaysBoth(a.p,g.p);if(d.length)add('hier','warn',`<b>${esc(title(a.p.nome))}</b> fora junto com o GO <b>${esc(title(g.nome))}</b> ${rng(d)}`,{day:d[0],ed:a.p.nome})})});
   // choques: mesmas chaves e limites do anti-colisão
   const{caps}=acCapsFor(),R0=M.rs,len=M.re-M.rs+1,cnt={};
   M.all.forEach(p=>{const ks=acKeys(p);p.per.forEach(q=>{for(let d=Math.max(q.ini,R0);d<=Math.min(q.fim,M.re);d++)ks.forEach(k=>{(cnt[k]||(cnt[k]=new Int16Array(len)))[d-R0]++})})});
@@ -991,10 +1089,10 @@ function render(){
   document.querySelectorAll('section[data-p]').forEach(s=>s.hidden=s.dataset.p!==st.tab);
   const L=filt();document.getElementById('fcount').textContent=`${L.length} no filtro`;
   document.getElementById('fclear').hidden=!hasFilt();saveFilt();
-  const fd=[st.grp.size?[...st.grp].join(', '):'',st.fun?title(st.fun):'',st.mes?mlabel(+st.mes):'',st.q.trim()?'busca "'+st.q.trim()+'"':''].filter(Boolean);
-  document.getElementById('printInfo').textContent=`${{geral:'Visão geral',cal:'Calendário',cap:'Capacidade',tl:'Linha do tempo',gest:'Gestão',conf:'Conformidade',base:'Base'}[st.tab]} · ${fd.length?'Filtro: '+fd.join(' · '):'Sem filtro'} · ${L.length} colaborador(es) · gerado em ${br(TODAY)}`;
+  const fd=[st.grp.size?[...st.grp].join(', '):'',st.fun?title(st.fun):'',st.go?'GO '+title(st.go):'',st.ga?'GA '+title(st.ga):'',st.mes?mlabel(+st.mes):'',st.q.trim()?'busca "'+st.q.trim()+'"':''].filter(Boolean);
+  document.getElementById('printInfo').textContent=`${{geral:'Visão geral',cal:'Calendário',cap:'Capacidade',tl:'Linha do tempo',gest:'Gestão',conf:'Conformidade',base:'Base',hier:'Hierarquia'}[st.tab]} · ${fd.length?'Filtro: '+fd.join(' · '):'Sem filtro'} · ${L.length} colaborador(es) · gerado em ${br(TODAY)}`;
   renderSimbar();if(st.tab==='tl')renderAC();
-  ({geral:renderGeral,cal:renderCal,cap:renderCap,tl:renderTL,gest:renderGest,conf:renderConf,base:renderBase})[st.tab](L);
+  ({geral:renderGeral,cal:renderCal,cap:renderCap,tl:renderTL,gest:renderGest,conf:renderConf,base:renderBase,hier:renderHier})[st.tab](L);
   botRender();
 }
 
@@ -1010,7 +1108,7 @@ document.getElementById('up').addEventListener('change',async e=>{const f=e.targ
     const fer=[];if(sF){const R=XLSX.utils.sheet_to_json(wb.Sheets[sF],{header:1,raw:true,defval:null});for(let i=4;i<R.length;i++){const r=R[i]||[];const d=ser(r[0]);if(d)fer.push({data:d,nome:r[1],abr:r[2],tipo:r[3],cons:r[4]})}}
     const raw={equipe:readSheet(wb.Sheets[sE]),gestao:sG?readSheet(wb.Sheets[sG]):[],feriados:fer,arquivo:f.name};
     if(!raw.equipe.length)throw new Error('Nenhum colaborador encontrado a partir da linha 8 da aba '+sE);
-    M=build(raw);M.tpl=/\.xls[xm]$/i.test(f.name)?buf:null;_gs=null;AC.res=null;st.edits.clear();saveEdits();st.day=null;st.capSel=null;st.fun='';st.grp.clear();setupFilters();render();
+    M=build(raw);attachHier();M.tpl=/\.xls[xm]$/i.test(f.name)?buf:null;_gs=null;AC.res=null;st.edits.clear();saveEdits();st.day=null;st.capSel=null;st.fun='';st.grp.clear();setupFilters();render();
   }catch(err){document.getElementById('srcinfo').textContent='Não foi possível ler o arquivo: '+err.message+'. Use o mesmo layout da planilha de controle (dados a partir da linha 8).'}
   e.target.value='';
 });
@@ -1078,6 +1176,6 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{paintT
 new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(st.tab==='tl'||st.tab==='gest')render()},250)});
 
-M=build(RAW);loadEdits();applyEdits();setupFilters();render();
+M=build(RAW);attachHier();loadEdits();applyEdits();setupFilters();render();
 </script>
 </body></html>
