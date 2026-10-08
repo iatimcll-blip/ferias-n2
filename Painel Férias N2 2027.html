@@ -170,14 +170,15 @@ dialog#syncDlg::backdrop{background:#0009}
 .hdet summary{cursor:pointer;padding:2px 0}
 .hdet .tablewrap{background:var(--surface)}
 .bot{position:fixed;right:18px;bottom:18px;z-index:30;width:62px;height:62px;border-radius:50%;border:2px solid var(--green);background:#182238;color:#fff;box-shadow:0 6px 20px #0005;cursor:pointer;display:grid;place-items:center;padding:0}
-.bot:hover{transform:translateY(-2px)}
+.bot{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.bot:not(.dragging):hover{transform:translateY(-2px)}
+.bot.dragging{cursor:grabbing;transform:scale(1.08);box-shadow:0 12px 28px #0007}
 .bot:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
 .bot svg{width:40px;height:40px}
 .bot .ant{fill:#42C34B}
 .bot.alert{border-color:var(--bad)}
 .bot.alert .ant{animation:botPulse 1.2s ease-in-out infinite}
-.bot .m-bad,.bot.alert .m-ok{display:none}
-.bot.alert .m-bad{display:inline}
+.bot .m-bad{display:none}
 .bot .eye{transform-box:fill-box;transform-origin:center;animation:botBlink 4.5s infinite}
 @keyframes botBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
 @keyframes botPulse{50%{fill:#F06B6B}}
@@ -426,10 +427,10 @@ dialog#acDlg .tablewrap{background:var(--surface)}
     <div class="row"><button type="button" class="btn" id="acDNo">Descartar</button><button type="submit" class="btn primary" value="ok">Aplicar proposta</button></div>
   </div>
 </form></dialog>
-<button class="bot" id="bot" aria-expanded="false" aria-controls="botPanel" title="Vivi: sua assistente de inconsistências"><svg viewBox="0 0 48 48" aria-hidden="true"><line x1="24" y1="5" x2="24" y2="11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle class="ant" cx="24" cy="5" r="3.2"/><rect x="4" y="19" width="5" height="9" rx="2" fill="#fff"/><rect x="39" y="19" width="5" height="9" rx="2" fill="#fff"/><rect x="9" y="11" width="30" height="24" rx="8" fill="#fff"/><circle cx="14" cy="27.5" r="2.2" fill="#FF8FC0" opacity=".75"/><circle cx="34" cy="27.5" r="2.2" fill="#FF8FC0" opacity=".75"/><g class="bow"><path d="M31 11.5l-6-4v8z" fill="#FF6FAE"/><path d="M31 11.5l6-4v8z" fill="#FF6FAE"/><circle cx="31" cy="11.5" r="2" fill="#E0458A"/></g><g class="eye"><circle cx="18" cy="22" r="3.2" fill="#182238"/><circle cx="30" cy="22" r="3.2" fill="#182238"/><path d="M15.6 19.8l-1.7-1.5M17.2 19l-.7-2M32.4 19.8l1.7-1.5M30.8 19l.7-2" stroke="#182238" stroke-width="1.3" stroke-linecap="round"/></g><path class="m-ok" d="M18 28.5q6 4.5 12 0" stroke="#182238" stroke-width="2.2" fill="none" stroke-linecap="round"/><path class="m-bad" d="M18 31q6-4 12 0" stroke="#182238" stroke-width="2.2" fill="none" stroke-linecap="round"/><rect x="15" y="37" width="18" height="7" rx="3" fill="#fff" opacity=".85"/></svg><span class="bdg" id="botBdg"></span></button>
+<button class="bot" id="bot" aria-expanded="false" aria-controls="botPanel" title="Vivi: clique para ver as inconsistências · arraste para mudar de lugar"><svg viewBox="0 0 48 48" aria-hidden="true"><line x1="24" y1="5" x2="24" y2="11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle class="ant" cx="24" cy="5" r="3.2"/><rect x="4" y="19" width="5" height="9" rx="2" fill="#fff"/><rect x="39" y="19" width="5" height="9" rx="2" fill="#fff"/><rect x="9" y="11" width="30" height="24" rx="8" fill="#fff"/><circle cx="14" cy="27.5" r="2.2" fill="#FF8FC0" opacity=".75"/><circle cx="34" cy="27.5" r="2.2" fill="#FF8FC0" opacity=".75"/><g class="bow"><path d="M31 11.5l-6-4v8z" fill="#FF6FAE"/><path d="M31 11.5l6-4v8z" fill="#FF6FAE"/><circle cx="31" cy="11.5" r="2" fill="#E0458A"/></g><g class="eye"><circle cx="18" cy="22" r="3.2" fill="#182238"/><circle cx="30" cy="22" r="3.2" fill="#182238"/><path d="M15.6 19.8l-1.7-1.5M17.2 19l-.7-2M32.4 19.8l1.7-1.5M30.8 19l.7-2" stroke="#182238" stroke-width="1.3" stroke-linecap="round"/></g><path class="m-ok" d="M18 28.5q6 4.5 12 0" stroke="#182238" stroke-width="2.2" fill="none" stroke-linecap="round"/><path class="m-bad" d="M18 31q6-4 12 0" stroke="#182238" stroke-width="2.2" fill="none" stroke-linecap="round"/><rect x="15" y="37" width="18" height="7" rx="3" fill="#fff" opacity=".85"/></svg><span class="bdg" id="botBdg"></span></button>
 <div class="botbub" id="botBub" hidden role="status"></div>
 <div class="botpanel" id="botPanel" hidden role="region" aria-label="Inconsistências encontradas pela Vivi">
-  <div class="bhd"><span class="bav"><svg viewBox="0 0 48 48" aria-hidden="true"><line x1="24" y1="5" x2="24" y2="11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle class="ant" cx="24" cy="5" r="3.2"/><rect x="4" y="19" width="5" height="9" rx="2" fill="#fff"/><rect x="39" y="19" width="5" height="9" rx="2" fill="#fff"/><rect x="9" y="11" width="30" height="24" rx="8" fill="#fff"/><circle cx="14" cy="27.5" r="2.2" fill="#FF8FC0" opacity=".75"/><circle cx="34" cy="27.5" r="2.2" fill="#FF8FC0" opacity=".75"/><g class="bow"><path d="M31 11.5l-6-4v8z" fill="#FF6FAE"/><path d="M31 11.5l6-4v8z" fill="#FF6FAE"/><circle cx="31" cy="11.5" r="2" fill="#E0458A"/></g><g class="eye"><circle cx="18" cy="22" r="3.2" fill="#182238"/><circle cx="30" cy="22" r="3.2" fill="#182238"/><path d="M15.6 19.8l-1.7-1.5M17.2 19l-.7-2M32.4 19.8l1.7-1.5M30.8 19l.7-2" stroke="#182238" stroke-width="1.3" stroke-linecap="round"/></g><path class="m-ok" d="M18 28.5q6 4.5 12 0" stroke="#182238" stroke-width="2.2" fill="none" stroke-linecap="round"/><path class="m-bad" d="M18 31q6-4 12 0" stroke="#182238" stroke-width="2.2" fill="none" stroke-linecap="round"/><rect x="15" y="37" width="18" height="7" rx="3" fill="#fff" opacity=".85"/></svg></span><div style="flex:1;min-width:0"><h2 style="font-size:15px">Vivi <small style="font-weight:400;color:var(--muted)">· assistente de inconsistências</small></h2><p class="sub" id="botSum" style="margin:2px 0 0"></p></div><button type="button" class="btn bact" id="botX" aria-label="Fechar">Fechar</button></div>
+  <div class="bhd"><span class="bav"><svg viewBox="0 0 48 48" aria-hidden="true"><line x1="24" y1="5" x2="24" y2="11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle class="ant" cx="24" cy="5" r="3.2"/><rect x="4" y="19" width="5" height="9" rx="2" fill="#fff"/><rect x="39" y="19" width="5" height="9" rx="2" fill="#fff"/><rect x="9" y="11" width="30" height="24" rx="8" fill="#fff"/><circle cx="14" cy="27.5" r="2.2" fill="#FF8FC0" opacity=".75"/><circle cx="34" cy="27.5" r="2.2" fill="#FF8FC0" opacity=".75"/><g class="bow"><path d="M31 11.5l-6-4v8z" fill="#FF6FAE"/><path d="M31 11.5l6-4v8z" fill="#FF6FAE"/><circle cx="31" cy="11.5" r="2" fill="#E0458A"/></g><g class="eye"><circle cx="18" cy="22" r="3.2" fill="#182238"/><circle cx="30" cy="22" r="3.2" fill="#182238"/><path d="M15.6 19.8l-1.7-1.5M17.2 19l-.7-2M32.4 19.8l1.7-1.5M30.8 19l.7-2" stroke="#182238" stroke-width="1.3" stroke-linecap="round"/></g><path class="m-ok" d="M18 28.5q6 4.5 12 0" stroke="#182238" stroke-width="2.2" fill="none" stroke-linecap="round"/><path class="m-bad" d="M18 31q6-4 12 0" stroke="#182238" stroke-width="2.2" fill="none" stroke-linecap="round"/><rect x="15" y="37" width="18" height="7" rx="3" fill="#fff" opacity=".85"/></svg></span><div style="flex:1;min-width:0"><h2 style="font-size:15px">Vivi <small style="font-weight:400;color:var(--muted)">· assistente de inconsistências</small></h2><p class="sub" id="botSum" style="margin:2px 0 0"></p></div><button type="button" class="btn bact" id="botX" aria-label="Fechar">Fechar</button><button type="button" class="btn bact" id="botHome" title="Leva a Vivi de volta ao canto inferior direito" hidden>Voltar ao canto</button></div>
   <div class="bf"><div class="chips" id="botF"></div><label class="flabel" style="display:flex;gap:6px;align-items:center;margin-left:auto"><input type="checkbox" id="botScope">só o filtro atual</label></div>
   <div class="bl" id="botL"></div>
 </div>
@@ -1100,7 +1101,7 @@ function botScan(){
         add('choque',mx-cap>=2?'bad':'warn',`<b>${esc(lbl)}</b>: ${mx} fora em ${br(R0+md)} (limite ${cap})${e>s?` <small>· de ${brs(s)} a ${br(e)}</small>`:''}`,{day:R0+md});
       i=j}});
   const ord={bad:0,warn:1,info:2};items.sort((a,b)=>ord[a.sev]-ord[b.sev]);return items}
-function botBubble(t){const b=document.getElementById('botBub');b.innerHTML=t;b.hidden=false;clearTimeout(botBubble.t);botBubble.t=setTimeout(()=>b.hidden=true,8000)}
+function botBubble(t){const b=document.getElementById('botBub');b.innerHTML=t;b.hidden=false;botPlace();clearTimeout(botBubble.t);botBubble.t=setTimeout(()=>b.hidden=true,8000)}
 function botRender(){
   const items=botScan(),nBad=items.filter(i=>i.sev==='bad').length,nWarn=items.filter(i=>i.sev==='warn').length,tot=nBad+nWarn;
   const b=document.getElementById('bot'),bd=document.getElementById('botBdg');
@@ -1116,9 +1117,40 @@ function botRender(){
   const tag={bad:'<span class="pill bad">crítico</span>',warn:'<span class="pill warn">atenção</span>',info:'<span class="pill new">info</span>'};
   const line=i=>`<div class="bi">${tag[i.sev]}<div>${i.txt}</div><div class="row" style="gap:4px;flex-wrap:nowrap">${i.act.ed?`<button type="button" class="btn bact" data-ed="${esc(i.act.ed)}">Editar</button>`:''}${i.act.day!=null?`<button type="button" class="btn bact" data-bday="${i.act.day}">Ver dia</button>`:''}${i.act.tab?`<button type="button" class="btn bact" data-btab="${i.act.tab}">Ver</button>`:''}${i.act.sync?'<button type="button" class="btn bact" data-bsync>Sincronizar</button>':''}</div></div>`;
   document.getElementById('botL').innerHTML=vis.length?BOT_CAT.map(([c,l])=>{const g=vis.filter(i=>i.cat===c);if(!g.length)return'';
-    return`<div class="bh"><span>${l} · ${g.length}</span>${c==='choque'?'<button type="button" class="btn bact" id="botAC">Gerar proposta anti-colisão</button>':''}</div>`+g.map(line).join('')}).join(''):`<p class="sub" style="margin:14px 4px">Nada para mostrar nesta categoria. 🎉</p>`}
+    return`<div class="bh"><span>${l} · ${g.length}</span>${c==='choque'?'<button type="button" class="btn bact" id="botAC">Gerar proposta anti-colisão</button>':''}</div>`+g.map(line).join('')}).join(''):`<p class="sub" style="margin:14px 4px">Nada para mostrar nesta categoria. 🎉</p>`;botPlace()}
 const botToggle=open=>{BOT.open=open;document.getElementById('botPanel').hidden=!open;document.getElementById('bot').setAttribute('aria-expanded',open);document.getElementById('botBub').hidden=true;botRender()};
-document.getElementById('bot').addEventListener('click',()=>botToggle(!BOT.open));
+// Vivi arrastável: posição salva como fração da tela (vale em qualquer tamanho de janela); lista e balão abrem do lado com espaço
+const botEl=document.getElementById('bot'),BOTPOS='ferias_vivi_pos';
+function botSetPos(x,y){const w=botEl.offsetWidth,h=botEl.offsetHeight;x=Math.max(8,Math.min(innerWidth-w-8,x));y=Math.max(8,Math.min(innerHeight-h-8,y));Object.assign(botEl.style,{left:x+'px',top:y+'px',right:'auto',bottom:'auto'});return[x,y]}
+function botRestore(){let f=null;try{f=JSON.parse(localStorage.getItem(BOTPOS)||'null')}catch(e){}
+  document.getElementById('botHome').hidden=!f;if(!f){Object.assign(botEl.style,{left:'',top:'',right:'',bottom:''});return}
+  botSetPos(f.fx*(innerWidth-botEl.offsetWidth),f.fy*(innerHeight-botEl.offsetHeight))}
+function botSave(){const r=botEl.getBoundingClientRect();try{localStorage.setItem(BOTPOS,JSON.stringify({fx:r.left/Math.max(1,innerWidth-r.width),fy:r.top/Math.max(1,innerHeight-r.height)}))}catch(e){}document.getElementById('botHome').hidden=false}
+function botPlace(){const r=botEl.getBoundingClientRect(),vw=innerWidth,vh=innerHeight,right=r.left+r.width/2>vw/2,below=r.top+r.height/2<vh/2;
+  const P=document.getElementById('botPanel');if(!P.hidden){P.style.maxHeight='';const w=P.offsetWidth;let h=P.offsetHeight,x,y;
+    const sb=vh-r.bottom-20,sa=r.top-20,sl=r.left-20,sr=vw-r.right-20;
+    if(h<=sb||h<=sa){x=right?r.right-w:r.left;y=(below?h<=sb:h>sa)?r.bottom+12:r.top-12-h}       // embaixo ou em cima
+    else if(w<=sl||w<=sr){x=(right&&w<=sl)||w>sr?r.left-12-w:r.right+12;y=r.top+r.height/2-h/2}  // ao lado
+    else{const up=sa>sb;P.style.maxHeight=Math.max(220,up?sa:sb)+'px';h=P.offsetHeight;x=right?r.right-w:r.left;y=up?r.top-12-h:r.bottom+12} // tela pequena: encolhe
+    x=Math.max(8,Math.min(vw-w-8,x));y=Math.max(8,Math.min(vh-h-8,y));
+    Object.assign(P.style,{left:x+'px',top:y+'px',right:'auto',bottom:'auto'})}
+  const B=document.getElementById('botBub');if(!B.hidden){const w=B.offsetWidth,h=B.offsetHeight;
+    let x=right?r.left-12-w:r.right+12,y=r.top+r.height/2-h/2;if(x<8||x+w>vw-8){x=Math.max(8,Math.min(vw-w-8,r.left+r.width/2-w/2));y=below?r.bottom+10:r.top-10-h}
+    y=Math.max(8,Math.min(vh-h-8,y));Object.assign(B.style,{left:x+'px',top:y+'px',right:'auto',bottom:'auto'});B.style.borderRadius=right?'12px 12px 2px 12px':'12px 12px 12px 2px'}}
+let botDrag=null;
+botEl.addEventListener('pointerdown',e=>{if(e.button!==0)return;const r=botEl.getBoundingClientRect();botDrag={sx:e.clientX,sy:e.clientY,ox:r.left,oy:r.top,moved:false,id:e.pointerId}});
+botEl.addEventListener('pointermove',e=>{if(!botDrag||e.pointerId!==botDrag.id)return;const dx=e.clientX-botDrag.sx,dy=e.clientY-botDrag.sy;
+  if(!botDrag.moved){if(Math.hypot(dx,dy)<6)return;botDrag.moved=true;try{botEl.setPointerCapture(e.pointerId)}catch(x){}botEl.classList.add('dragging')}
+  botSetPos(botDrag.ox+dx,botDrag.oy+dy);botPlace()});
+const botEnd=()=>{if(!botDrag)return;const mv=botDrag.moved;botDrag=null;botEl.classList.remove('dragging');if(mv){botSave();BOT.dragged=true;setTimeout(()=>BOT.dragged=false,0)}};
+botEl.addEventListener('pointerup',botEnd);botEl.addEventListener('pointercancel',botEnd);
+botEl.addEventListener('keydown',e=>{const k={ArrowLeft:[-24,0],ArrowRight:[24,0],ArrowUp:[0,-24],ArrowDown:[0,24]}[e.key];
+  if(k){e.preventDefault();const r=botEl.getBoundingClientRect();botSetPos(r.left+k[0],r.top+k[1]);botSave();botPlace()}
+  else if(e.key==='Home'){e.preventDefault();try{localStorage.removeItem(BOTPOS)}catch(x){}botRestore();botPlace()}});
+document.getElementById('botHome').addEventListener('click',()=>{try{localStorage.removeItem(BOTPOS)}catch(x){}botRestore();botPlace();botEl.focus()});
+let botRz;addEventListener('resize',()=>{clearTimeout(botRz);botRz=setTimeout(()=>{botRestore();botPlace()},100)});
+botRestore();
+document.getElementById('bot').addEventListener('click',()=>{if(BOT.dragged)return;botToggle(!BOT.open)});
 document.getElementById('botBub').addEventListener('click',()=>botToggle(true));
 document.getElementById('botX').addEventListener('click',()=>{botToggle(false);document.getElementById('bot').focus()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&BOT.open&&!document.querySelector('dialog[open]')){botToggle(false);document.getElementById('bot').focus()}});
