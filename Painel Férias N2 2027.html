@@ -99,7 +99,10 @@ tr:hover td{background:var(--surface2)}
 .hc{width:28px;height:26px;border-radius:5px;text-align:center;font-size:11px;line-height:26px;cursor:pointer;color:var(--fg)}
 .hc.na{background:transparent;cursor:default}
 .hc.we{outline:1px dashed var(--line);outline-offset:-1px}
-.hc.ho{box-shadow:inset 0 -3px 0 var(--hol)}
+.hc.ho{box-shadow:inset 0 -3px 0 var(--fg)}
+.hleg{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px;font-size:12px;color:var(--muted)}
+.hleg .bar{width:240px;max-width:60vw;height:12px;border-radius:6px;background:linear-gradient(90deg,rgb(44,123,182),rgb(120,190,225),rgb(255,214,79),rgb(248,141,52),rgb(215,25,28))}
+.hleg i{display:inline-block;width:16px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
 .hc.sel{outline:2px solid var(--green);outline-offset:-1px}
 /* capacidade */
 .cap{overflow-x:auto}
@@ -150,7 +153,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding-block:10px 24
 @media (max-width:640px){.gname{width:140px;min-width:140px}.kpi .val{font-size:26px}.sep{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .hc.td{position:relative}
-.hc.td::after{content:"";position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;background:var(--bad)}
+.hc.td::after{content:"";position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--fg);box-shadow:0 0 0 1.5px var(--surface)}
 .themebtn{display:inline-flex;align-items:center;gap:6px}
 .themebtn svg{width:16px;height:16px}
 .printonly{display:none}
@@ -297,8 +300,8 @@ dialog#acDlg .tablewrap{background:var(--surface)}
 
 <!-- CALENDÁRIO -->
 <section data-p="cal" class="grid" hidden>
-  <div class="card"><h2>Mapa de calor de ausências</h2><p class="sub">Número de pessoas em férias em cada dia. Clique num dia para ver os nomes. Tracejado = fim de semana · sublinhado amarelo = feriado considerado</p>
-    <div class="heat" id="heat"></div></div>
+  <div class="card"><h2>Mapa de calor de ausências</h2><p class="sub">Número de pessoas em férias em cada dia: quanto mais ausências, mais a cor vai do azul para o amarelo e o vermelho. Clique num dia para ver os nomes.</p>
+    <div class="heat" id="heat"></div><div class="hleg" id="heatLeg"></div></div>
   <div class="card"><div class="row" style="justify-content:space-between"><h2 id="calTitle">Dia selecionado</h2><button class="btn dTodayB">Ir para hoje</button></div><p class="sub" id="calSub"></p><div class="list" id="calList"></div></div>
 </section>
 
@@ -479,6 +482,11 @@ function grupo(f){f=(f||'').toUpperCase();
   if(/INFRAESTRUTURA/.test(f))return'Infraestrutura'; if(/REDE/.test(f))return'Rede Externa'; return'Outros'}
 const gcol=g=>css((GROUPS.find(x=>x[0]===g)||GROUPS[5])[1]);
 const title=s=>s.toLowerCase().replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toUpperCase()).replace(/\b(De|Da|Do|Dos|Das|E)\b/g,w=>w.toLowerCase());
+// mapa de calor: azul (poucas ausências) → amarelo → vermelho (mais ausências)
+const HEAT_STOPS=[[44,123,182],[120,190,225],[255,214,79],[248,141,52],[215,25,28]];
+const heatRGBa=t=>{t=Math.max(0,Math.min(1,t));const n=HEAT_STOPS.length-1,k=Math.min(n-1,Math.floor(t*n)),f=t*n-k,A=HEAT_STOPS[k],B=HEAT_STOPS[k+1];return A.map((v,i)=>Math.round(v+(B[i]-v)*f))};
+const heatRGB=t=>`rgb(${heatRGBa(t).join(',')})`;
+const heatFg=t=>{const[r,g,b]=heatRGBa(t);return .299*r+.587*g+.114*b>150?'#182238':'#fff'};
 function mix(t){const h=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));const A=h(css('--heat0')),B=h(css('--heat1'));return`rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`}
 
 // Período concessivo: [fim do aquisitivo mais recente completo em s, último dia para gozo]; null se ainda não tem 12 meses
@@ -693,14 +701,17 @@ document.querySelectorAll('.dTodayB').forEach(b=>b.addEventListener('click',()=>
 
 function renderCal(L){
   const {rs,re}=M;const a=daily(L,rs,re);let mx=1;a.forEach(v=>mx=Math.max(mx,v));
+  if(st.day==null||st.day<rs||st.day>re){let pk=-1;for(let i=0;i<a.length;i++)if(a[i]>pk&&M.isBiz(rs+i,M.natHol)){pk=a[i];st.day=rs+i}}
   const c0=css('--heat0');
   let html='<table><thead><tr><th></th>'+Array.from({length:31},(_,i)=>`<th>${i+1}</th>`).join('')+'<th>máx</th></tr></thead><tbody>';
   for(let k=mkey(rs);k<=mkey(re);k++){const y=Math.floor(k/12),m=k%12,nd=new Date(Date.UTC(y,m+1,0)).getUTCDate();let row=`<tr><td class="m">${mlabel(k)}</td>`,mm=0;
     for(let i=1;i<=31;i++){if(i>nd){row+='<td><div class="hc na"></div></td>';continue}const d=Date.UTC(y,m,i)/864e5,v=a[d-rs];mm=Math.max(mm,v);
-      const t=v/mx,bg=v?mix(.15+.85*t):c0,fc=t>.55?'#fff':'';const cls=['hc'];if([0,6].includes(dow(d)))cls.push('we');if(M.natHol.has(d))cls.push('ho');if(d===TODAY)cls.push('td');
+      const t=mx>1?(v-1)/(mx-1):1,bg=v?heatRGB(t):c0,fc=v?heatFg(t):'';const cls=['hc'];if([0,6].includes(dow(d)))cls.push('we');if(M.natHol.has(d))cls.push('ho');if(d===TODAY)cls.push('td');
       row+=`<td><div class="${cls.join(' ')}" data-d="${d}" tabindex="0" title="${DOW[dow(d)]} ${br(d)}${d===TODAY?' (hoje)':''}: ${v} em férias${M.holName[d]?' · '+esc(M.holName[d]):''}" style="background:${bg};${fc?'color:'+fc:''}">${v||''}</div></td>`}
     html+=row+`<td class="m" style="text-align:left;padding-left:6px">${mm}</td></tr>`}
   document.getElementById('heat').innerHTML=html+'</tbody></table>';
+  document.getElementById('heatLeg').innerHTML=`<span>1 pessoa</span><span class="bar" role="img" aria-label="Escala do azul ao vermelho"></span><span>${mx} pessoa(s), o dia com mais ausências</span>`+
+    `<span><i style="background:${c0};outline:1px solid var(--line)"></i>ninguém fora</span><span><i style="box-shadow:inset 0 -3px 0 var(--fg);background:${c0};outline:1px solid var(--line)"></i>feriado</span><span><i style="outline:1px dashed var(--line);background:${c0}"></i>fim de semana</span><span><i style="background:var(--fg);width:8px;height:8px;border-radius:50%"></i>hoje</span>`;
   renderDay(L);
 }
 document.getElementById('heat').addEventListener('click',e=>{const c=e.target.closest('.hc[data-d]');if(c){st.day=+c.dataset.d;renderDay(filt())}});
