@@ -243,7 +243,7 @@ dialog#acDlg .tablewrap{background:var(--surface)}
     <div><h1>Controle de Férias N2 · 2027</h1><p id="srcinfo"></p><p id="printInfo" class="printonly"></p></div>
   </div>
   <div class="row">
-    <span class="hint">Atualize com uma nova versão da planilha</span>
+    <span class="hint">Nova planilha vai para todos os aparelhos</span>
     <label class="btn primary" for="up">Carregar base .xlsx</label>
     <button class="btn" id="repBtn" title="Baixa a planilha de controle no mesmo layout (abas, fórmulas, formatação e calendário), com as datas atuais do painel, incluindo edições manuais e a simulação anti-colisão">Gerar relatório .xlsx</button>
     <span id="repMsg" class="hint" role="status"></span>
@@ -434,9 +434,10 @@ dialog#acDlg .tablewrap{background:var(--surface)}
 </div>
 <dialog id="syncDlg" aria-labelledby="syncT"><form method="dialog" onsubmit="return false">
   <h2 id="syncT">Sincronização entre dispositivos</h2>
-  <p class="sub" style="margin:4px 0 12px">Edições de datas, cadeados, regras e proposta aplicada do anti-colisão e hierarquia carregada ficam no arquivo <code>dados/estado.json</code> do repositório no GitHub. Todo aparelho que abre o painel carrega a versão mais recente e confere de novo a cada 2 minutos. Para <b>gravar</b>, este aparelho precisa de um token do GitHub.</p>
+  <p class="sub" style="margin:4px 0 12px">Edições de datas, cadeados, regras e proposta aplicada do anti-colisão e hierarquia carregada ficam no arquivo <code>dados/estado.json</code> do repositório no GitHub. Todo aparelho que abre o painel carrega a versão mais recente e confere de novo a cada minuto. Uma base nova carregada em qualquer aparelho também vai para todos. Para <b>gravar</b>, o aparelho precisa ter aberto o <b>link da equipe</b> uma vez (ou ter um token do GitHub).</p>
   <div class="list" id="syncInfo"></div>
   <div id="syncConf" hidden></div>
+  <div id="syncTeam" class="notice" style="margin-top:12px" hidden><b>Link da equipe:</b> quem abrir este link uma vez passa a enviar e receber as alterações automaticamente, sem configurar nada. Envie só para a equipe, porque ele funciona como uma senha. Para cortar o acesso, revogue o token no GitHub e gere um link novo.<div class="row" style="margin-top:8px"><button type="button" class="btn" id="syncLink">Copiar link da equipe</button><span class="flabel" id="syncLinkMsg"></span></div></div>
   <div class="grid" style="gap:10px;margin-top:14px">
     <label class="sfield">Seu nome (aparece no histórico do GitHub)<input id="syncNome" type="text" autocomplete="name"></label>
     <label class="sfield">Token do GitHub (fica só neste navegador)<input id="syncTok" type="password" autocomplete="off" spellcheck="false"></label>
@@ -1068,7 +1069,7 @@ function botScan(){
     p.per.filter(q=>q.ini<c0||q.fim>c1).forEach(q=>add('plan','info',`${nm}: ${q.k+1}º período (${br(q.ini)}) fora do calendário da planilha (jan/27 a jan/28)`,{ed:p.nome}));
     if(isEdited(p))add('plan','info',`${nm}: datas editadas no painel. Gere o relatório .xlsx para levar à planilha`,{ed:p.nome});
   });
-  if(!scope&&isDirty()&&!syncToken())add('plan','warn','<b>Alterações só neste aparelho</b>: edições, cadeados ou proposta aplicada ainda não foram para o GitHub. Configure a sincronização para que apareçam nos outros dispositivos',{sync:true});
+  if(!scope&&isDirty()&&!syncToken())add('plan','warn','<b>Alterações só neste aparelho</b>: edições, cadeados, proposta aplicada ou base nova ainda não foram para os outros aparelhos. Abra o link da equipe neste aparelho (ou configure o token) para enviar',{sync:true});
   if(!scope&&SYNC.status==='conflict')add('plan','bad','<b>Conflito de sincronização</b>: o GitHub tem alterações mais novas de outro aparelho e este aparelho também tem alterações não enviadas',{sync:true});
   // hierarquia
   const HH=M.hier,rng=d=>`<small>· ${d.length} dia(s) útil(eis), de ${brs(d[0])} a ${br(d[d.length-1])}</small>`;
@@ -1123,7 +1124,7 @@ document.getElementById('botPanel').addEventListener('click',e=>{
 // Estado compartilhado em dados/estado.json do repositório: edições, cadeados, regras e proposta aplicada do anti-colisão
 // e hierarquia carregada. Ler é público; gravar exige token fine-grained (Contents: read and write só neste repositório),
 // guardado só no navegador de quem edita. Mudança de versão é detectada pelo campo "atualizado".
-const SYNC={repo:'iatimcll-blip/ferias-n2',path:'dados/estado.json',branch:'main',remote:null,applying:false,status:'',busy:false,timer:null,err:''};
+const SYNC={repo:'iatimcll-blip/ferias-n2',path:'dados/estado.json',basePath:'dados/base.xlsx',branch:'main',remote:null,applying:false,status:'',busy:false,timer:null,err:''};
 const lsGet=(k,d=null)=>{try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
 SYNC.repo=lsGet('ferias_sync_repo',SYNC.repo);
@@ -1134,15 +1135,20 @@ const CLOUD_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const b64e=s=>{const u=new TextEncoder().encode(s);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)};
 const b64d=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,'')),c=>c.charCodeAt(0)));
 const dtBR=iso=>{try{return new Date(iso).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch(e){return iso}};
-function collectState(){return{versao:1,atualizado:new Date().toISOString(),por:lsGet('ferias_sync_nome','')||'sem nome',arquivo:M.arquivo,
+function collectState(){return{versao:1,atualizado:new Date().toISOString(),por:lsGet('ferias_sync_nome','')||deviceLabel(),arquivo:M.arquivo,
   edits:[...st.edits].map(([n,ps])=>[n,ps.map(q=>[ds(q.ini),q.dias])]),locks:[...st.locks],
   ac:{mode:AC.mode,gestCap:AC.gestCap,maxShift:AC.maxShift,caps:AC.caps},
+  base:M.baseVer?{arquivo:M.arquivo,enviado:M.baseVer,xlsx:!!(M.tpl||M.tplRemote),raw:M.raw}:null,
   aplicado:M.all.filter(p=>p.moved&&!isEdited(p)).map(p=>[p.nome,p.per.map(q=>[ds(q.ini),q.dias])]),
   hier:HIER===HIER_EMB?null:HIER}}
 function markDirty(){if(SYNC.applying||!M)return;lsSet('ferias_sync_dirty','1');lsSet('ferias_estado',JSON.stringify(collectState()));
   if(SYNC.status!=='conflict')SYNC.status='';syncPaint();
   if(syncToken()&&syncAuto()&&SYNC.status!=='conflict'){clearTimeout(SYNC.timer);SYNC.timer=setTimeout(()=>syncPush(false),3000)}}
 function applyState(S){SYNC.applying=true;try{
+    // base: troca a planilha quando a versão enviada por outro aparelho é diferente da que está aberta
+    const bv=S.base&&S.base.enviado||null;
+    if(bv!==(M.baseVer||null)){if(S.base&&S.base.raw){M=build(S.base.raw);Object.assign(M,{raw:S.base.raw,baseVer:bv,tpl:null,tplRemote:!!S.base.xlsx,baseUp:true})}else{M=build(RAW)}
+      _gs=null;st.day=null;st.capSel=null}
     st.edits=new Map((S.edits||[]).map(([n,ps])=>[n,ps.map(([i,d])=>({ini:dn(i),dias:+d}))]));
     st.locks=new Set(S.locks||[]);
     if(S.ac)Object.assign(AC,{mode:S.ac.mode||'funcao',gestCap:S.ac.gestCap??2,maxShift:S.ac.maxShift??90,caps:S.ac.caps||{}});AC.res=null;
@@ -1155,10 +1161,14 @@ function applyState(S){SYNC.applying=true;try{
   }finally{SYNC.applying=false}
   setupFilters();render()}
 async function syncFetch(){const t=syncToken(),h={Accept:'application/vnd.github+json'};if(t)h.Authorization='Bearer '+t;
-  try{const r=await fetch(`https://api.github.com/repos/${SYNC.repo}/contents/${SYNC.path}?ref=${SYNC.branch}`,{headers:h,cache:'no-store'});
+  if(SYNC.etag&&SYNC.remote&&SYNC.remote.state)h['If-None-Match']=SYNC.etag;
+  try{if(!t&&SYNC.limited&&Date.now()<SYNC.limited)throw new Error('limite de consultas da API');
+    const r=await fetch(`https://api.github.com/repos/${SYNC.repo}/contents/${SYNC.path}?ref=${SYNC.branch}`,{headers:h,cache:'no-store'});
+    if(r.status===304)return SYNC.remote;
+    if(!t&&+r.headers.get('x-ratelimit-remaining')<3)SYNC.limited=(+r.headers.get('x-ratelimit-reset')||0)*1000||Date.now()+3600e3;
     if(r.status===404)return{missing:true};
     if(!r.ok)throw new Error(r.status===401?'token inválido ou expirado':'GitHub respondeu '+r.status);
-    const j=await r.json();return{sha:j.sha,state:JSON.parse(b64d(j.content))}}
+    SYNC.etag=r.headers.get('etag');const j=await r.json();return{sha:j.sha,state:JSON.parse(b64d(j.content))}}
   catch(e){// sem a API (limite de consultas ou rede): tenta o arquivo publicado no GitHub Pages
     try{const r=await fetch(SYNC.path+'?t='+Date.now(),{cache:'no-store'});if(r.ok)return{sha:null,state:await r.json()}}catch(x){}
     return{error:e.message||'sem conexão'}}}
@@ -1167,8 +1177,17 @@ async function syncPush(force){const t=syncToken();if(!t||SYNC.busy){syncPaint()
   try{const cur=await syncFetch();if(cur.error)throw new Error(cur.error);
     const known=lsGet('ferias_sync_ver');
     if(!force&&cur.state&&cur.state.atualizado!==known){SYNC.remote=cur;SYNC.status='conflict';return}
+    if(M.baseVer&&!M.baseUp&&M.tpl){SYNC.status='base';syncPaint();
+      const h={Accept:'application/vnd.github+json',Authorization:'Bearer '+t};
+      const g=await fetch(`https://api.github.com/repos/${SYNC.repo}/contents/${SYNC.basePath}?ref=${SYNC.branch}`,{headers:h,cache:'no-store'});
+      const bsha=g.ok?(await g.json()).sha:null;
+      const u8=new Uint8Array(M.tpl);let bin='';for(let i=0;i<u8.length;i+=32768)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+32768));
+      const bb={message:`Painel de férias: nova base ${M.arquivo} enviada por ${lsGet('ferias_sync_nome','')||deviceLabel()}`,content:btoa(bin),branch:SYNC.branch};if(bsha)bb.sha=bsha;
+      const ub=await fetch(`https://api.github.com/repos/${SYNC.repo}/contents/${SYNC.basePath}`,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},h),body:JSON.stringify(bb)});
+      if(!ub.ok)throw new Error('não foi possível enviar a planilha base (GitHub respondeu '+ub.status+')');
+      M.baseUp=true;M.tplRemote=true;SYNC.status='saving';syncPaint()}
     const S=collectState();
-    const body={message:`Painel de férias: ajustes sincronizados por ${S.por} (${S.edits.length} editado(s), ${S.locks.length} travado(s), ${S.aplicado.length} reprogramado(s) pelo anti-colisão)`,content:b64e(JSON.stringify(S,null,1)+'\n'),branch:SYNC.branch};
+    const body={message:`Painel de férias: ajustes sincronizados por ${S.por} (${S.base?'base '+S.base.arquivo+', ':''}${S.edits.length} editado(s), ${S.locks.length} travado(s), ${S.aplicado.length} reprogramado(s) pelo anti-colisão)`,content:b64e(JSON.stringify(S,null,1)+'\n'),branch:SYNC.branch};
     if(cur.sha)body.sha=cur.sha;
     const r=await fetch(`https://api.github.com/repos/${SYNC.repo}/contents/${SYNC.path}`,{method:'PUT',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(r.status===409||r.status===422){SYNC.remote=await syncFetch();SYNC.status='conflict';return}
@@ -1188,7 +1207,8 @@ async function syncCheck(initial){if(SYNC.busy)return;const cur=await syncFetch(
   else SYNC.status='conflict';
   syncPaint();botRender()}
 function syncPaint(){const b=document.getElementById('syncBtn');if(!b)return;const t=syncToken(),d=isDirty();let txt,cls='';
-  if(SYNC.status==='saving')txt='Salvando no GitHub…';
+  if(SYNC.status==='base')txt='Enviando a base…';
+  else if(SYNC.status==='saving')txt='Salvando no GitHub…';
   else if(SYNC.status==='conflict'){txt='Conflito: resolver';cls='bad'}
   else if(SYNC.status==='err'){txt='Erro ao sincronizar';cls='bad'}
   else if(d&&!t){txt='Só neste aparelho';cls='warn'}
@@ -1210,7 +1230,8 @@ function syncFill(){const t=syncToken(),R=SYNC.remote,d=isDirty();
   document.getElementById('syncNome').value=lsGet('ferias_sync_nome','');
   document.getElementById('syncTok').value='';document.getElementById('syncTok').placeholder=t?'•••••••• configurado (deixe vazio para manter)':'github_pat_…';
   document.getElementById('syncRepo').value=SYNC.repo;document.getElementById('syncAuto').checked=syncAuto();
-  document.getElementById('syncForget').hidden=!t}
+  document.getElementById('syncForget').hidden=!t;document.getElementById('syncTeam').hidden=!t;document.getElementById('syncLinkMsg').textContent='';
+  document.getElementById('syncNome').placeholder=deviceLabel()}
 const syncDlg=document.getElementById('syncDlg');
 function openSync(){document.getElementById('syncMsg').textContent='';syncFill();if(!syncDlg.open)syncDlg.showModal();syncCheck(false)}
 function syncSaveFields(){lsSet('ferias_sync_nome',document.getElementById('syncNome').value.trim()||null);
@@ -1222,7 +1243,7 @@ document.getElementById('syncClose').addEventListener('click',()=>{syncSaveField
 document.getElementById('syncNow').addEventListener('click',async()=>{syncSaveFields();const m=document.getElementById('syncMsg');
   if(!syncToken()){m.textContent='Informe o token do GitHub para gravar. Sem token, este aparelho só lê.';return}
   lsSet('ferias_sync_dirty','1');m.textContent='Sincronizando…';await syncPush(false);
-  m.textContent=SYNC.status==='ok'?'Pronto: alterações salvas no GitHub. Os outros aparelhos recebem em até 2 minutos (ou ao abrir o painel).':SYNC.status==='conflict'?'Há uma versão mais nova no GitHub: escolha acima qual manter.':'Não foi possível sincronizar: '+SYNC.err;syncFill()});
+  m.textContent=SYNC.status==='ok'?'Pronto: alterações salvas no GitHub. Os outros aparelhos recebem em até 1 minuto (ou ao abrir o painel).':SYNC.status==='conflict'?'Há uma versão mais nova no GitHub: escolha acima qual manter.':'Não foi possível sincronizar: '+SYNC.err;syncFill()});
 document.getElementById('syncPull').addEventListener('click',async()=>{const m=document.getElementById('syncMsg');m.textContent='Carregando…';const cur=await syncFetch();
   if(cur.error){m.textContent='Não foi possível carregar: '+cur.error;return}if(cur.missing){m.textContent='Ainda não há alterações salvas no GitHub.';return}
   if(isDirty()&&!confirm('Carregar a versão do GitHub descarta as alterações deste aparelho que não foram enviadas. Continuar?')){m.textContent='';return}
@@ -1231,13 +1252,26 @@ document.getElementById('syncForget').addEventListener('click',()=>{lsSet('feria
 document.getElementById('syncConf').addEventListener('click',async e=>{const R=SYNC.remote;
   if(e.target.id==='syncUseRemote'&&R&&R.state){applyState(R.state);lsSet('ferias_sync_ver',R.state.atualizado);lsSet('ferias_sync_dirty',null);SYNC.status='ok';syncPaint();botRender();document.getElementById('syncMsg').textContent='Usando a versão do GitHub.'}
   if(e.target.id==='syncUseLocal'){await syncPush(true);document.getElementById('syncMsg').textContent=SYNC.status==='ok'?'Alterações deste aparelho enviadas.':'Não foi possível enviar: '+SYNC.err}});
+function deviceLabel(){const u=navigator.userAgent;const os=/Android/.test(u)?'Android':/iPhone|iPad/.test(u)?'iPhone/iPad':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':'Linux';
+  const b=/Edg\//.test(u)?'Edge':/OPR\//.test(u)?'Opera':/Chrome\//.test(u)?'Chrome':/Firefox\//.test(u)?'Firefox':/Safari\//.test(u)?'Safari':'navegador';return`aparelho ${os} · ${b}`}
+async function fetchBaseXlsx(){const t=syncToken(),h={Accept:'application/vnd.github.raw'};if(t)h.Authorization='Bearer '+t;
+  try{const r=await fetch(`https://api.github.com/repos/${SYNC.repo}/contents/${SYNC.basePath}?ref=${SYNC.branch}`,{headers:h,cache:'no-store'});if(r.ok)return await r.arrayBuffer()}catch(e){}
+  try{const r=await fetch(SYNC.basePath+'?t='+Date.now(),{cache:'no-store'});if(r.ok)return await r.arrayBuffer()}catch(e){}return null}
+const PANEL_URL='https://iatimcll-blip.github.io/ferias-n2/Painel%20F%C3%A9rias%20N2%202027.html';
+document.getElementById('syncLink').addEventListener('click',()=>{const t=syncToken(),m=document.getElementById('syncLinkMsg');if(!t)return;
+  const base=/^https?:/.test(location.protocol)?location.origin+location.pathname:PANEL_URL;
+  copyTxt(base+'#chave='+encodeURIComponent(t),m)});
 function syncInit(){
+  // link da equipe: #chave=<token> configura este aparelho e some da barra de endereço
+  const hm=location.hash.match(/(?:^#|&)chave=([^&]+)/);
+  if(hm){const tk=decodeURIComponent(hm[1]).trim();if(/^(github_pat_|ghp_|gho_)\w+$/.test(tk)){lsSet('ferias_sync_token',tk);lsSet('ferias_sync_auto','1');SYNC.linked=true}
+    try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
   // migração: ajustes feitos antes da sincronização continuam valendo e entram como pendentes
   if(lsGet('ferias_sync_ver')==null&&lsGet('ferias_sync_dirty')==null&&(st.edits.size||st.locks.size||lsGet('ferias_ac')||lsGet('ferias_hier')))lsSet('ferias_sync_dirty','1');
   // último estado deste aparelho (inclui proposta aplicada) volta antes de consultar o GitHub
   const loc=lsGet('ferias_estado');if(loc){try{applyState(JSON.parse(loc))}catch(e){}}
-  syncPaint();syncCheck(true);
-  setInterval(()=>{if(document.visibilityState==='visible'&&!document.querySelector('dialog[open]'))syncCheck(false)},120000);
+  syncPaint();syncCheck(true).then(()=>{if(SYNC.linked)botBubble('<b>Vivi:</b> pronto! Este aparelho agora envia e recebe as alterações da equipe automaticamente.')});
+  setInterval(()=>{if(document.visibilityState==='visible'&&!document.querySelector('dialog[open]'))syncCheck(false)},60000);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncCheck(false)})}
 
 function render(){
@@ -1254,7 +1288,7 @@ function render(){
 
 // ---------- upload ----------
 document.getElementById('up').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
-  if(st.edits.size&&!confirm(`Carregar uma nova base descarta as edições manuais de ${st.edits.size} colaborador(es). Gere o relatório .xlsx antes se quiser mantê-las. Continuar?`)){e.target.value='';return}
+  if(st.edits.size&&!confirm(`Carregar uma nova base descarta as edições manuais de ${st.edits.size} colaborador(es), em todos os aparelhos sincronizados. Gere o relatório .xlsx antes se quiser mantê-las. Continuar?`)){e.target.value='';return}
   try{const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});
     const ser=v=>typeof v==='number'&&v>20000?ds(Math.round(v)-25569):(v instanceof Date?ds(Math.round(v.getTime()/864e5)):null);
     const readSheet=ws=>{const R=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});const out=[];
@@ -1264,7 +1298,7 @@ document.getElementById('up').addEventListener('change',async e=>{const f=e.targ
     const fer=[];if(sF){const R=XLSX.utils.sheet_to_json(wb.Sheets[sF],{header:1,raw:true,defval:null});for(let i=4;i<R.length;i++){const r=R[i]||[];const d=ser(r[0]);if(d)fer.push({data:d,nome:r[1],abr:r[2],tipo:r[3],cons:r[4]})}}
     const raw={equipe:readSheet(wb.Sheets[sE]),gestao:sG?readSheet(wb.Sheets[sG]):[],feriados:fer,arquivo:f.name};
     if(!raw.equipe.length)throw new Error('Nenhum colaborador encontrado a partir da linha 8 da aba '+sE);
-    M=build(raw);attachHier();M.tpl=/\.xls[xm]$/i.test(f.name)?buf:null;_gs=null;AC.res=null;st.edits.clear();saveEdits();st.day=null;st.capSel=null;st.fun='';st.grp.clear();setupFilters();render();
+    M=build(raw);attachHier();M.tpl=/\.xls[xm]$/i.test(f.name)?buf:null;Object.assign(M,{raw,baseVer:new Date().toISOString(),baseUp:false,tplRemote:false});_gs=null;AC.res=null;st.edits.clear();saveEdits();st.day=null;st.capSel=null;st.fun='';st.grp.clear();setupFilters();render();
   }catch(err){document.getElementById('srcinfo').textContent='Não foi possível ler o arquivo: '+err.message+'. Use o mesmo layout da planilha de controle (dados a partir da linha 8).'}
   e.target.value='';
 });
@@ -1274,6 +1308,7 @@ document.getElementById('up').addEventListener('change',async e=>{const f=e.targ
 const decodeXml=s=>String(s).replace(/&#x([0-9a-f]+);/gi,(m,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&#(\d+);/g,(m,d)=>String.fromCodePoint(+d)).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
 async function buildReport(){
   let buf=M.tpl;
+  if(!buf&&M.baseVer&&M.tplRemote){buf=await fetchBaseXlsx();if(buf)M.tpl=buf;else throw new Error('não consegui baixar a planilha base sincronizada do GitHub')}
   if(!buf){const b=atob(document.getElementById('tplx').textContent.trim());buf=new Uint8Array(b.length);for(let i=0;i<b.length;i++)buf[i]=b.charCodeAt(i)}
   const zip=await JSZip.loadAsync(buf);
   const wbx=await zip.file('xl/workbook.xml').async('string');
