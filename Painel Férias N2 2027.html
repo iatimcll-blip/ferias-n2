@@ -135,9 +135,7 @@ tr:hover td{background:var(--surface2)}
 .fca div{background:var(--surface2);border-radius:10px;padding:12px}
 .fca h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--blue)}
 .fca ul{margin:0;padding-left:18px;font-size:14px}
-#simbar{background:var(--warnbg);border-top:1px solid var(--warn)}
-#simbar .wrap{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding-block:8px;font-size:14px}
-#simbar b{color:var(--warn)}
+.acbdg{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#0B1A0D;color:#fff;font-size:12px;font-weight:700;line-height:18px;vertical-align:1px}
 .lk{background:none;border:0;padding:0 4px 0 0;cursor:pointer;color:var(--muted);vertical-align:-3px;line-height:0}
 .lk svg{width:15px;height:15px}
 .lk[aria-pressed="true"]{color:var(--blue)}
@@ -274,7 +272,7 @@ dialog#acDlg .tablewrap{background:var(--surface)}
   <span class="flabel">Mês</span><select id="fmes"><option value="">Período todo</option></select>
   <input id="fq" type="search" placeholder="Buscar colaborador" aria-label="Buscar colaborador">
   <span id="fcount" class="flabel"></span><button class="btn" id="fclear" hidden>Limpar filtros</button>
-</div><div id="simbar" hidden><div class="wrap"><span id="simtxt"></span><span class="row"><button class="btn" data-go="tl">Ver alterações</button><button class="btn" id="edClearAll" hidden>Descartar edições</button><button class="btn" id="simUndo">Desfazer anti-colisão</button></span></div></div></div>
+</div></div>
 
 <main><div class="wrap">
 <!-- VISÃO GERAL -->
@@ -404,7 +402,7 @@ dialog#acDlg .tablewrap{background:var(--surface)}
 <!-- BASE -->
 <section data-p="base" class="grid" hidden>
   <div class="card"><h2>Base consolidada</h2><p class="sub">Retorno, limite concessivo e alertas recalculados pelo painel com os feriados da aba Feriados. Folga = dias entre o fim do período e o limite concessivo (considera o período aquisitivo mais recente completo na data de início). Clique no cabeçalho para ordenar. Use o lápis para editar início e dias: fim e retorno são calculados automaticamente</p>
-    <div class="row" style="margin-bottom:10px"><button class="btn" id="copyT">Copiar tabela</button><span id="copyMsg" class="flabel"></span></div>
+    <div class="row" style="margin-bottom:10px"><button class="btn" id="copyT">Copiar tabela</button><button class="btn" id="edClearAll" hidden>Descartar edições</button><span id="copyMsg" class="flabel"></span></div>
     <div class="tablewrap"><table id="tBase"></table></div></div>
 </section>
 </div></main>
@@ -919,10 +917,12 @@ function renderAC(){
     document.getElementById('acChanges').innerHTML=`<thead><tr><th></th><th>Colaborador</th><th>Função</th><th>Período</th><th>Original</th><th>Novo início</th><th class="num">Deslocamento</th><th>Novo fim</th><th>Retorno</th><th>Status</th></tr></thead><tbody>${rows.map(({p,q,o,sh})=>`<tr><td>${lockBtn(p)}${edBtn(p)}</td><td>${esc(title(p.nome))}</td><td>${esc(title(p.funcao))}</td><td>${q.k+1}º · ${q.dias}d</td><td>${o?DOW[dow(o.ini)]+' '+br(o.ini):'—'}</td><td><b>${DOW[dow(q.ini)]} ${br(q.ini)}</b></td><td class="num"><span class="shift ${sh>0?'p':'n'}">${sh>0?'+':''}${sh} d</span></td><td>${br(q.fim)}</td><td>${DOW[dow(q.ret)]} ${br(q.ret)}</td><td>${isEdited(p)?'<span class="pill ed">editado</span> ':''}${AC.res&&AC.res.sem.includes(p.nome)?'<span class="pill bad">sem vaga</span>':p.alerta==='OK'?'<span class="pill ok">OK</span>':`<span class="pill warn">${esc(p.alerta)}</span>`}</td></tr>`).join('')}</tbody>`;
     card._rows=rows}
 }
-function renderSimbar(){const mv=M.all.filter(p=>p.moved);const b=document.getElementById('simbar');b.hidden=!mv.length;if(!mv.length)return;const m=acMeasure();
-  const ne=mv.filter(isEdited).length,na=mv.length-ne;
-  document.getElementById('edClearAll').hidden=!ne;document.getElementById('simUndo').hidden=!na;
-  document.getElementById('simtxt').innerHTML=`<b>Datas alteradas no painel:</b> ${[ne?ne+' colaborador(es) editado(s) manualmente':'',na?na+' reprogramado(s) pelo anti-colisão':''].filter(Boolean).join(' · ')}${AC.res?` · choques ${fmt(AC.res.before.exc)} → ${fmt(m.exc)} pessoa-dias`:''}. Todos os módulos e o relatório .xlsx usam as novas datas.`}
+// Aviso do anti-colisão fica no próprio botão: selo com quantos estão reprogramados e detalhe no título
+function renderSimbar(){const mv=M.all.filter(p=>p.moved),ne=mv.filter(isEdited).length,na=mv.length-ne;
+  const ec=document.getElementById('edClearAll');ec.hidden=!ne;ec.textContent=`Descartar edições (${ne})`;
+  const tip=na?`Anti-colisão aplicado: ${na} colaborador(es) reprogramado(s)${AC.res?`, choques ${fmt(AC.res.before.exc)} → ${fmt(acMeasure().exc)} pessoa-dias`:''}. Todos os módulos e o relatório .xlsx usam as novas datas. Clique para gerar uma nova proposta; use Desfazer para voltar às datas da planilha.`:'Calcula uma proposta de datas sem choque e mostra antes de aplicar';
+  document.querySelectorAll('.acRunB').forEach(b=>{if(b.disabled)return;b.innerHTML='Gerar proposta anti-colisão'+(na?`<span class="acbdg">${na} aplicado${na>1?'s':''}</span>`:'');b.title=tip;b.setAttribute('aria-label',na?`Gerar proposta anti-colisão. ${na} reprogramado(s) aplicado(s)`:'Gerar proposta anti-colisão')});
+  document.querySelectorAll('.acUndoB').forEach(b=>{b.hidden=!na;b.title=na?`Volta as ${na} pessoa(s) reprogramadas às datas da planilha (edições manuais continuam)`:''})}
 // O botão calcula uma proposta e mostra numa janela; o painel só muda ao aplicar.
 const acDlg=document.getElementById('acDlg');const AC_PREV={per:null,res:null};
 document.querySelectorAll('.acRunB').forEach(b=>b.addEventListener('click',()=>{b.disabled=true;b.textContent='Calculando…';setTimeout(()=>{
@@ -949,9 +949,8 @@ acDlg.addEventListener('close',()=>{
 document.getElementById('acDNo').addEventListener('click',()=>acDlg.close('no'));
 document.getElementById('acDCopy').addEventListener('click',()=>{const rows=acDlg._rows||[];copyTxt(['Colaborador\tFunção\tPeríodo\tDias\tInício na planilha\tInício proposto\tDeslocamento (dias)\tNovo fim\tRetorno'].concat(rows.map(({p,q,o,sh})=>[p.nome,p.funcao,q.k+1,q.dias,o?br(o.ini):'',br(q.ini),sh,br(q.fim),br(q.ret)].join('\t'))).join('\n'),document.getElementById('acDMsg'))});
 const doUndo=()=>{acUndo();applyEdits();markDirty();render()};
-document.querySelectorAll('.acUndoB').forEach(b=>b.addEventListener('click',doUndo));document.getElementById('simUndo').addEventListener('click',doUndo);
+document.querySelectorAll('.acUndoB').forEach(b=>b.addEventListener('click',doUndo));
 document.getElementById('acGest2').addEventListener('change',e=>{AC.gestCap=Math.max(0,+e.target.value||0);saveAC();render()});
-document.querySelector('[data-go="tl"]').addEventListener('click',()=>{st.tab='tl';render();document.getElementById('acChangesCard').scrollIntoView({block:'start'})});
 document.getElementById('acMode').addEventListener('change',e=>{AC.mode=e.target.value;saveAC();render()});
 document.getElementById('acGest').addEventListener('change',e=>{AC.gestCap=Math.max(0,+e.target.value||0);saveAC();render()});
 document.getElementById('acShift').addEventListener('change',e=>{AC.maxShift=Math.max(1,+e.target.value||90);saveAC();render()});
