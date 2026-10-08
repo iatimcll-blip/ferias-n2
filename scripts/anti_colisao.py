@@ -3,7 +3,8 @@
 Mesmas regras do botão "Aplicar anti-colisão" do painel:
 - limite de pessoas fora ao mesmo tempo por função (ou grupo), padrão 10% do quadro;
 - limite conjunto de gestores fora ao mesmo tempo;
-- mantém a duração; início de seg a qua, fora de feriado e dos 2 dias antes dele;
+- mantém a duração; início sempre na segunda-feira (ou no 1º dia útil da semana, se a
+  segunda for feriado), nunca nos 2 dias antes de feriado ou DSR (CLT art. 134 §3º);
 - respeita 12 meses de casa e o prazo concessivo; não mexe em período já iniciado
   nem em colaborador travado; procura a data mais próxima da original.
 
@@ -176,8 +177,12 @@ def conc_win(p, s):
 
 
 def bad_start(H, n):
+    # Início permitido: segunda-feira; se a segunda (e os dias seguintes) forem feriado, o 1º dia útil da semana.
+    # Nunca nos 2 dias antes de feriado ou do descanso semanal (CLT art. 134 §3º; sáb/dom = repouso).
     w = dow(n)
-    return w >= 4 or w == 0 or n in H or (n + 1) in H or (n + 2) in H
+    if w >= 4 or w == 0 or n in H or (n + 1) in H or (n + 2) in H:
+        return True
+    return any(d not in H for d in range(n - (w + 6) % 7, n))
 
 
 def caps_for(pessoas, regras):

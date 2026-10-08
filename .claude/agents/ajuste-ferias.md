@@ -29,7 +29,7 @@ O arquivo é criado com os padrões na primeira execução:
 - `deslocamento_preferido_dias`: acima disso a mudança é penalizada (padrão 90).
 - `travados`: nomes, como aparecem na planilha, cujas datas não podem mudar.
 
-Restrições fixas do motor: mantém a duração de cada período; inicia de segunda a quarta, fora de feriado e dos 2 dias antes dele (CLT art. 134 §3º); não começa antes de 12 meses de casa; termina dentro do prazo concessivo (art. 137); não mexe em período já iniciado; deixa 1 dia entre períodos da mesma pessoa; fica dentro de jan/2027 a jan/2028; procura a data válida mais próxima da original.
+Restrições fixas do motor: mantém a duração de cada período; inicia sempre na segunda-feira, ou no 1º dia útil da semana se a segunda for feriado, e nunca nos 2 dias antes de feriado ou DSR (CLT art. 134 §3º); não começa antes de 12 meses de casa; termina dentro do prazo concessivo (art. 137); não mexe em período já iniciado; deixa 1 dia entre períodos da mesma pessoa; fica dentro de jan/2027 a jan/2028; procura a data válida mais próxima da original.
 
 ## Como trabalhar
 

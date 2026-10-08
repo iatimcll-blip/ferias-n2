@@ -13,8 +13,8 @@
   "dias_com_choque_antes": 119,
   "choques_depois": 2,
   "dias_com_choque_depois": 2,
-  "periodos_reprogramados": 42,
-  "colaboradores_reprogramados": 42,
+  "periodos_reprogramados": 61,
+  "colaboradores_reprogramados": 61,
   "sem_vaga": [
     {
       "nome": "CARLOS HENRIQUE FREITAS GOMES",
@@ -109,7 +109,7 @@
   ],
   "csv": "relatorios\\alteracoes_2026-10-07.csv",
   "planilha_ajustada": "relatorios\\Controle_Ferias_N2_2027_sem_colisao_2026-10-07.xlsx",
-  "celulas_linhas_gravadas": 49,
+  "celulas_linhas_gravadas": 68,
   "nao_encontrados_na_planilha": [],
   "celulas_faltando": []
 }

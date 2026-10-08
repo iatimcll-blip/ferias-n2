@@ -325,7 +325,7 @@ dialog#acDlg .tablewrap{background:var(--surface)}
 <section data-p="tl" class="grid" hidden>
   <div class="card acpanel">
     <div class="row" style="justify-content:space-between;align-items:flex-start">
-      <div style="min-width:0;flex:1 1 380px"><h2>Anti-colisão</h2><p class="sub" style="margin:0">Reorganiza as datas para que nenhum grupo passe do limite de pessoas fora ao mesmo tempo. Mantém a duração de cada período, inicia sempre de seg a qua fora de véspera de feriado, respeita os 12 meses de casa e o prazo concessivo, e procura a data mais próxima da original. Colaboradores com cadeado fechado, datas editadas manualmente e períodos já iniciados não mudam.</p></div>
+      <div style="min-width:0;flex:1 1 380px"><h2>Anti-colisão</h2><p class="sub" style="margin:0">Reorganiza as datas para que nenhum grupo passe do limite de pessoas fora ao mesmo tempo. Mantém a duração de cada período, inicia sempre na segunda-feira (ou no 1º dia útil da semana, se a segunda for feriado) e nunca nos 2 dias antes de feriado ou DSR, respeita os 12 meses de casa e o prazo concessivo, e procura a data mais próxima da original. Colaboradores com cadeado fechado, datas editadas manualmente e períodos já iniciados não mudam.</p></div>
       <div class="row"><button class="btn primary acRunB" id="acRun">Gerar proposta anti-colisão</button><button class="btn acUndoB" id="acUndo">Desfazer</button></div>
     </div>
     <div class="grid kpis" id="acKpis" style="margin-top:14px"></div>
@@ -409,7 +409,7 @@ dialog#acDlg .tablewrap{background:var(--surface)}
 </div></main>
 <dialog id="edDlg" aria-labelledby="edT"><form id="edForm" method="dialog">
   <h2 id="edT"></h2><p class="sub" id="edS" style="margin:0"></p>
-  <p class="sub" style="margin:8px 0 0">Informe início e dias de cada período. Fim e retorno são calculados automaticamente. Deixe início e dias vazios para remover um período. As novas datas entram em todos os módulos e no relatório .xlsx.</p>
+  <p class="sub" style="margin:8px 0 0">Informe início e dias de cada período. O início deve ser numa segunda-feira (ou no 1º dia útil da semana, se a segunda for feriado). Fim e retorno são calculados automaticamente. Deixe início e dias vazios para remover um período. As novas datas entram em todos os módulos e no relatório .xlsx.</p>
   <div class="edgrid" id="edRows"></div>
   <ul class="edal" id="edAl" aria-live="polite"></ul>
   <div class="row" style="justify-content:space-between;margin-top:16px">
@@ -492,7 +492,9 @@ function mix(t){const h=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));const A=h
 function concWin(o,s){if(o.adm==null)return null;let k=0;while(addY(o.adm,k+1)<=s)k++;if(k===0)return null;return[addY(o.adm,k),addY(o.adm,k+1)-1]}
 
 let M; // model
-function badStartFn(H){return n=>{const w=dow(n);return w>=4||w===0||H.has(n)||H.has(n+1)||H.has(n+2)}}
+// Início permitido: segunda-feira; se a segunda (e os dias seguintes) forem feriado, o 1º dia útil daquela semana.
+// Nunca nos 2 dias antes de feriado ou do descanso semanal (CLT art. 134 §3º; sáb/dom = repouso).
+function badStartFn(H){return n=>{const w=dow(n);if(w>=4||w===0||H.has(n)||H.has(n+1)||H.has(n+2))return true;for(let d=n-((w+6)%7);d<n;d++)if(!H.has(d))return true;return false}}
 function evalP(o){
   const H=o.H,full=o.per,bad=badStartFn(H);
   full.sort((a,b)=>a.ini-b.ini).forEach((p,j)=>{p.k=j;p.fim=p.ini+p.dias-1;let r=p.fim+1;while(!M_isBiz(r,H))r++;p.ret=r;p.bad=bad(p.ini);const w=concWin(o,p.ini);p.lim=w?w[1]:null});
@@ -505,7 +507,7 @@ function evalP(o){
   if(full.length&&Math.max(...full.map(p=>p.dias))<14)issues.push('Nenhum período com 14+ dias');
   if(full.length&&o.aniv!=null&&Math.min(...full.map(p=>p.ini))<o.aniv)issues.push('Antes de 12 meses de casa');
   if(full.some(p=>p.lim!=null&&p.fim>p.lim))issues.push('Ultrapassa prazo concessivo');
-  if(full.some(p=>p.bad))issues.push('Início qui a dom ou véspera de feriado');
+  if(full.some(p=>p.bad))issues.push('Início fora da segunda-feira ou véspera de feriado');
   o.issues=[...new Set(issues)];o.alerta=full.length?(o.issues[0]||'OK'):'Sem programação';
   let fol=null,lim=null;full.forEach(p=>{if(p.lim==null)return;const f=p.lim-p.fim;if(fol==null||f<fol){fol=f;lim=p.lim}});o.folga=fol;o.lim=lim;
   o.saldo=full.length?Math.max(0,30-o.tot):30;
@@ -766,7 +768,7 @@ function gantt(el,L,sort){
   M.natHol.forEach(d=>{if(d>=rs&&d<=re)hl+=`<div class="ghol" style="left:${(d-rs)*px}px" title="${esc(M.holName[d]||'Feriado')}"></div>`});
   if(TODAY>=rs&&TODAY<=re)hl+=`<div class="gtoday" style="left:${(TODAY-rs)*px}px"></div>`;
   const pc=['--p1','--p2','--p3'];
-  const rows=L.map(p=>{const lk=isLocked(p);return`<div class="grow"><div class="gname" title="${esc(p.nome)} · ${esc(p.funcao)}">${lockBtn(p)}${edBtn(p)}<span class="gdot" style="background:${gcol(p.grupo)}"></span><span class="nm">${esc(title(p.nome))}</span></div><div class="gtrack" style="width:${W}px">${p.moved?p.orig.map(q=>`<div class="gghost" style="left:${(q.ini-rs)*px}px;width:${q.dias*px}px"></div>`).join(''):''}${p.per.map(q=>{const o=p.orig.find(x=>x.k===q.k);const mv=p.moved&&(!o||o.ini!==q.ini);const lim=q.lim!=null&&q.fim>q.lim;return`<div class="gbar ${q.bad||lim?'bad':''} ${mv?'mv':''} ${lk?'lockd':''}" data-ed="${esc(p.nome)}" style="left:${(q.ini-rs)*px}px;width:${q.dias*px}px;background-color:var(${pc[q.k]||'--p3'})" title="${esc(title(p.nome))}${lk?' (travado)':''}\n${q.k+1}º período: ${br(q.ini)} a ${br(q.fim)} (${q.dias} dias)\nRetorno: ${DOW[dow(q.ret)]} ${br(q.ret)}${q.lim!=null?'\nLimite concessivo: '+br(q.lim):''}${mv&&o?'\nOriginal: '+br(o.ini)+' ('+(q.ini-o.ini>0?'+':'')+(q.ini-o.ini)+' dias)':''}${q.bad?'\nAlerta: início qui a dom ou véspera de feriado':''}${lim?'\nAlerta: termina depois do limite concessivo':''}${isEdited(p)?'\nDatas editadas no painel':''}\nClique para editar">${q.dias*px>26?q.dias+'d':''}</div>`}).join('')}</div></div>`}).join('');
+  const rows=L.map(p=>{const lk=isLocked(p);return`<div class="grow"><div class="gname" title="${esc(p.nome)} · ${esc(p.funcao)}">${lockBtn(p)}${edBtn(p)}<span class="gdot" style="background:${gcol(p.grupo)}"></span><span class="nm">${esc(title(p.nome))}</span></div><div class="gtrack" style="width:${W}px">${p.moved?p.orig.map(q=>`<div class="gghost" style="left:${(q.ini-rs)*px}px;width:${q.dias*px}px"></div>`).join(''):''}${p.per.map(q=>{const o=p.orig.find(x=>x.k===q.k);const mv=p.moved&&(!o||o.ini!==q.ini);const lim=q.lim!=null&&q.fim>q.lim;return`<div class="gbar ${q.bad||lim?'bad':''} ${mv?'mv':''} ${lk?'lockd':''}" data-ed="${esc(p.nome)}" style="left:${(q.ini-rs)*px}px;width:${q.dias*px}px;background-color:var(${pc[q.k]||'--p3'})" title="${esc(title(p.nome))}${lk?' (travado)':''}\n${q.k+1}º período: ${br(q.ini)} a ${br(q.fim)} (${q.dias} dias)\nRetorno: ${DOW[dow(q.ret)]} ${br(q.ret)}${q.lim!=null?'\nLimite concessivo: '+br(q.lim):''}${mv&&o?'\nOriginal: '+br(o.ini)+' ('+(q.ini-o.ini>0?'+':'')+(q.ini-o.ini)+' dias)':''}${q.bad?'\nAlerta: início fora da segunda-feira ou véspera de feriado':''}${lim?'\nAlerta: termina depois do limite concessivo':''}${isEdited(p)?'\nDatas editadas no painel':''}\nClique para editar">${q.dias*px>26?q.dias+'d':''}</div>`}).join('')}</div></div>`}).join('');
   el.innerHTML=`<div class="gt" style="width:${W+240}px"><div class="ghead"><div class="gname">${L.length} colaboradores</div><div class="gtrack" style="width:${W}px">${mh}</div></div><div style="position:relative">${rows}<div style="position:absolute;top:0;bottom:0;left:var(--gl,240px);width:${W}px;pointer-events:none">${ml}${hl}</div></div></div>`;
   const nw=el.querySelector('.gname').offsetWidth;el.querySelector('.gt').style.setProperty('--gl',nw+'px');
 }
@@ -796,18 +798,18 @@ function renderGest(){
   gantt(document.getElementById('ganttG'),G,'ini');
 }
 
-const ACTION={'Início qui a dom ou véspera de feriado':'Antecipar ou adiar o início para seg a qua, fora dos 2 dias antes de DSR ou feriado (CLT art. 134 §3º).','Antes de 12 meses de casa':'Reprogramar para depois de completar o período aquisitivo de 12 meses.','Ultrapassa prazo concessivo':'Antecipar o período para terminar até o limite concessivo; os dias depois do limite são pagos em dobro (CLT art. 137).','Períodos sobrepostos':'Corrigir datas para que os períodos não se cruzem.','Total acima de 30 dias':'Reduzir os dias para fechar no máximo 30.','Período menor que 5 dias':'Juntar dias para que cada período tenha pelo menos 5.','Nenhum período com 14+ dias':'Reorganizar para que um dos períodos tenha 14 dias ou mais.','Início ou dias em branco':'Preencher início e dias do período na planilha.','Sem programação':'Programar as férias com o colaborador e o gestor imediato.'};
+const ACTION={'Início fora da segunda-feira ou véspera de feriado':'Mover o início para a segunda-feira (ou para o 1º dia útil da semana, se a segunda for feriado), fora dos 2 dias antes de feriado ou DSR (CLT art. 134 §3º).','Antes de 12 meses de casa':'Reprogramar para depois de completar o período aquisitivo de 12 meses.','Ultrapassa prazo concessivo':'Antecipar o período para terminar até o limite concessivo; os dias depois do limite são pagos em dobro (CLT art. 137).','Períodos sobrepostos':'Corrigir datas para que os períodos não se cruzem.','Total acima de 30 dias':'Reduzir os dias para fechar no máximo 30.','Período menor que 5 dias':'Juntar dias para que cada período tenha pelo menos 5.','Nenhum período com 14+ dias':'Reorganizar para que um dos períodos tenha 14 dias ou mais.','Início ou dias em branco':'Preencher início e dias do período na planilha.','Sem programação':'Programar as férias com o colaborador e o gestor imediato.'};
 const SEV=a=>a==='OK'?'ok':(/Antes de 12|concessivo|sobrepostos|acima|branco|Sem prog/.test(a)?'bad':'warn');
 function renderConf(L){
   const al=L.filter(p=>p.alerta!=='OK');const cnt={};L.forEach(p=>p.issues.forEach(i=>cnt[i]=(cnt[i]||0)+1));
   const ok=L.length-al.length;const cc=cnt['Ultrapassa prazo concessivo']||0;
   const perto=L.filter(p=>p.folga!=null&&p.folga>=0&&p.folga<30).length;
-  document.getElementById('ckpis').innerHTML=kpi('Sem pendência',ok,`${L.length?Math.round(ok/L.length*100):0}% do filtro`,'ok')+kpi('Com alerta',al.length,'precisam de ajuste antes da marcação',al.length?'warn':'ok')+kpi('Início em dia vedado',cnt['Início qui a dom ou véspera de feriado']||0,'qui a dom ou véspera de feriado','warn')+kpi('Antes de 12 meses',cnt['Antes de 12 meses de casa']||0,'período aquisitivo incompleto',cnt['Antes de 12 meses de casa']?'bad':'ok')+kpi('Risco de dobra',cc,`passam do prazo concessivo · ${perto} terminam a menos de 30 dias do limite`,cc?'bad':perto?'warn':'ok');
+  document.getElementById('ckpis').innerHTML=kpi('Sem pendência',ok,`${L.length?Math.round(ok/L.length*100):0}% do filtro`,'ok')+kpi('Com alerta',al.length,'precisam de ajuste antes da marcação',al.length?'warn':'ok')+kpi('Início em dia vedado',cnt['Início fora da segunda-feira ou véspera de feriado']||0,'fora da segunda ou véspera de feriado','warn')+kpi('Antes de 12 meses',cnt['Antes de 12 meses de casa']||0,'período aquisitivo incompleto',cnt['Antes de 12 meses de casa']?'bad':'ok')+kpi('Risco de dobra',cc,`passam do prazo concessivo · ${perto} terminam a menos de 30 dias do limite`,cc?'bad':perto?'warn':'ok');
   const ks=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
   chart('chAlert',{type:'bar',data:{labels:ks.length?ks:['Sem alertas'],datasets:[{label:'Colaboradores',data:ks.length?ks.map(k=>cnt[k]):[0],backgroundColor:ks.map(k=>css(SEV(k)==='bad'?'--bad':'--warn')),borderRadius:4}]},options:baseOpts({indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{color:css('--muted'),precision:0},grid:{color:css('--line')}},y:{ticks:{color:css('--muted')},grid:{display:false}}}})});
   const byG={};al.forEach(p=>byG[p.grupo]=(byG[p.grupo]||0)+1);
   const fato=ks.length?ks.map(k=>`${cnt[k]} colaborador(es) com "${k}"`):['Nenhum alerta no filtro atual'];
-  const causa=[];if(cnt['Início qui a dom ou véspera de feriado'])causa.push('Datas de início escolhidas em quinta a domingo ou coladas em feriados (ex.: carnaval, 21/04, 12/10)');if(cnt['Antes de 12 meses de casa'])causa.push('Programação feita antes do fim do período aquisitivo (admissões recentes)');if(cc)causa.push('Períodos marcados perto do aniversário de admissão, que atravessam o fim do prazo concessivo');if(Object.keys(byG).length)causa.push('Concentração: '+Object.entries(byG).sort((a,b)=>b[1]-a[1]).map(([g,n])=>`${g} (${n})`).join(', '));if(!causa.length)causa.push('—');
+  const causa=[];if(cnt['Início fora da segunda-feira ou véspera de feriado'])causa.push('Datas de início fora da segunda-feira ou coladas em feriados (ex.: carnaval, 21/04, 12/10)');if(cnt['Antes de 12 meses de casa'])causa.push('Programação feita antes do fim do período aquisitivo (admissões recentes)');if(cc)causa.push('Períodos marcados perto do aniversário de admissão, que atravessam o fim do prazo concessivo');if(Object.keys(byG).length)causa.push('Concentração: '+Object.entries(byG).sort((a,b)=>b[1]-a[1]).map(([g,n])=>`${g} (${n})`).join(', '));if(!causa.length)causa.push('—');
   const acao=ks.map(k=>ACTION[k]).filter(Boolean);acao.push('Gestor imediato valida a reprogramação na planilha antes da marcação no sistema corporativo.');
   document.getElementById('fca').innerHTML=`<div><h3>Fato</h3><ul>${fato.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div><h3>Causa</h3><ul>${causa.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div><h3>Ação</h3><ul>${acao.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
   const c0=dn('2027-01-01'),c1=dn('2028-01-31');const fora=L.filter(p=>p.per.some(q=>q.ini<c0||q.fim>c1));
@@ -1070,7 +1072,7 @@ function botScan(){
     if(!p.per.length){add('plan','warn',`${nm} sem férias programadas`,{ed:p.nome});return}
     p.issues.forEach(i=>{let det='';
       if(i==='Ultrapassa prazo concessivo')det='risco de pagar em dobro · '+p.per.filter(q=>q.lim!=null&&q.fim>q.lim).map(q=>`${q.k+1}º período termina ${br(q.fim)}, ${q.fim-q.lim} dia(s) após o limite ${br(q.lim)}`).join('; ');
-      else if(i==='Início qui a dom ou véspera de feriado')det=p.sugest.join('; ');
+      else if(i==='Início fora da segunda-feira ou véspera de feriado')det=p.sugest.join('; ');
       else if(i==='Antes de 12 meses de casa')det=`completa 12 meses em ${br(p.aniv)}`;
       add(i==='Início ou dias em branco'?'base':'clt',SEV(i),`${nm}: ${esc(i)}${det?` <small>· ${esc(det)}</small>`:''}`,{ed:p.nome})});
     if(p.folga!=null&&p.folga>=0&&p.folga<30)add('clt','warn',`${nm}: termina a ${p.folga} dia(s) do limite concessivo (${br(p.lim)})`,{ed:p.nome});
